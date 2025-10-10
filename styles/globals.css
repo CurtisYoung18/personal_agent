@@ -1,0 +1,669 @@
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+}
+
+/* 登录页面样式 */
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.login-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  padding: 48px;
+  max-width: 440px;
+  width: 100%;
+  animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.login-header h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1a202c;
+  margin-bottom: 8px;
+}
+
+.login-header p {
+  font-size: 14px;
+  color: #718096;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.form-group input {
+  padding: 12px 16px;
+  font-size: 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  transition: all 0.2s;
+  outline: none;
+}
+
+.form-group input:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.form-group input:disabled {
+  background-color: #f7fafc;
+  cursor: not-allowed;
+}
+
+.error-message {
+  padding: 12px 16px;
+  background-color: #fed7d7;
+  color: #c53030;
+  border-radius: 8px;
+  font-size: 14px;
+  text-align: center;
+}
+
+.submit-btn {
+  padding: 14px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 8px;
+}
+
+.submit-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+}
+
+.submit-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* 患者頁面樣式 */
+.patient-container {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: white;
+  display: flex;
+  flex-direction: column;
+}
+
+.patient-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  flex-shrink: 0;
+}
+
+.patient-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+.patient-name {
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.case-number {
+  font-size: 13px;
+  opacity: 0.9;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 4px 12px;
+  border-radius: 12px;
+}
+
+.event-info {
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+.logout-btn-small {
+  padding: 6px 16px;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.logout-btn-small:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.patient-iframe {
+  width: 100%;
+  flex: 1;
+  border: none;
+  display: block;
+}
+
+/* 加载状态样式 */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  color: white;
+}
+
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-container p {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+/* 管理员登录页面 */
+.admin-login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.admin-login-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  padding: 48px;
+  max-width: 440px;
+  width: 100%;
+  animation: fadeIn 0.5s ease-in;
+}
+
+.admin-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.admin-header h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1a202c;
+  margin-bottom: 8px;
+}
+
+.admin-header p {
+  font-size: 14px;
+  color: #718096;
+}
+
+.admin-login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.admin-hint {
+  text-align: center;
+  padding: 12px;
+  background: #f7fafc;
+  border-radius: 8px;
+  color: #4a5568;
+}
+
+/* 管理后台页面 */
+.admin-dashboard {
+  min-height: 100vh;
+  background: #f7fafc;
+  padding: 0;
+}
+
+.admin-header-bar {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 24px 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.admin-title h1 {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0 0 4px 0;
+}
+
+.admin-title p {
+  font-size: 14px;
+  opacity: 0.9;
+  margin: 0;
+}
+
+.logout-btn {
+  padding: 10px 20px;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.logout-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.admin-controls {
+  padding: 24px 32px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  background: white;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.search-box {
+  flex: 1;
+}
+
+.search-box input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.search-box input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.add-btn {
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.add-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.patients-table-container {
+  padding: 24px 32px;
+  overflow-x: auto;
+}
+
+.patients-table {
+  width: 100%;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-collapse: collapse;
+}
+
+.patients-table thead {
+  background: #f7fafc;
+}
+
+.patients-table th {
+  padding: 16px;
+  text-align: left;
+  font-weight: 600;
+  color: #4a5568;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.patients-table td {
+  padding: 16px;
+  color: #2d3748;
+  font-size: 14px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.patients-table tbody tr:hover {
+  background: #f7fafc;
+}
+
+.patients-table .actions {
+  display: flex;
+  gap: 8px;
+}
+
+.edit-btn-small,
+.delete-btn-small {
+  padding: 6px 12px;
+  font-size: 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.edit-btn-small {
+  background: #edf2f7;
+  color: #4a5568;
+}
+
+.edit-btn-small:hover {
+  background: #e2e8f0;
+}
+
+.delete-btn-small {
+  background: #fed7d7;
+  color: #c53030;
+}
+
+.delete-btn-small:hover {
+  background: #feb2b2;
+}
+
+.no-data {
+  padding: 60px 20px;
+  text-align: center;
+  color: #a0aec0;
+  font-size: 16px;
+}
+
+/* 模态框 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-in;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 20px;
+  color: #1a202c;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #a0aec0;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.close-btn:hover {
+  background: #f7fafc;
+  color: #4a5568;
+}
+
+.modal-form {
+  padding: 24px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.form-group select {
+  padding: 12px 16px;
+  font-size: 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  transition: all 0.2s;
+  outline: none;
+  width: 100%;
+}
+
+.form-group select:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.form-group textarea {
+  padding: 12px 16px;
+  font-size: 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  transition: all 0.2s;
+  outline: none;
+  width: 100%;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.form-group textarea:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.cancel-btn,
+.save-btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.cancel-btn {
+  background: #f7fafc;
+  color: #4a5568;
+}
+
+.cancel-btn:hover {
+  background: #e2e8f0;
+}
+
+.save-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.save-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .login-card {
+    padding: 32px 24px;
+  }
+
+  .login-header h1 {
+    font-size: 24px;
+  }
+
+  .form-group input {
+    font-size: 16px; /* 防止 iOS 自动缩放 */
+  }
+
+  .admin-header-bar {
+    flex-direction: column;
+    gap: 16px;
+    align-items: flex-start;
+  }
+
+  .admin-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .add-btn {
+    width: 100%;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .patients-table {
+    font-size: 12px;
+  }
+
+  .patients-table th,
+  .patients-table td {
+    padding: 12px 8px;
+  }
+
+  .modal-content {
+    width: 95%;
+    max-height: 85vh;
+  }
+}
+
