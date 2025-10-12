@@ -50,20 +50,66 @@ body {
   }
 }
 
-.login-header {
+/* Logo 區域 */
+.login-logo-section {
   text-align: center;
-  margin-bottom: 32px;
+  margin-bottom: 24px;
 }
 
-.login-header h1 {
-  font-size: 28px;
+.chp-logo {
+  width: 240px;
+  height: auto;
+  margin: 0 auto 16px;
+  display: block;
+}
+
+.login-title-section h1 {
+  font-size: 24px;
   font-weight: 700;
   color: #1a202c;
-  margin-bottom: 8px;
+  margin: 0 0 8px 0;
+}
+
+.demo-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 4px 16px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.login-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #e2e8f0, transparent);
+  margin: 24px 0;
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.login-header h2 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #2d3748;
+  margin: 0 0 8px 0;
 }
 
 .login-header p {
   font-size: 14px;
+  color: #718096;
+  margin: 0;
+}
+
+.login-footer {
+  text-align: center;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #e2e8f0;
   color: #718096;
 }
 

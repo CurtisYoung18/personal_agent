@@ -120,6 +120,42 @@ POSTGRES_URL=your-database-url
 
 ---
 
+## 🔑 訪問路徑
+
+### 患者登入頁面
+```
+線上：https://your-vercel-url.vercel.app
+本地：http://localhost:3000
+```
+
+### 管理後台
+```
+線上：https://your-vercel-url.vercel.app/admin
+本地：http://localhost:3000/admin
+
+登入憑證：
+用戶名：admin
+密碼：admin123
+```
+
+---
+
+## 🗄️ 數據庫說明
+
+### 本地開發
+- 使用 `lib/db-mock.ts` 中的模擬數據
+- 無需配置數據庫，開箱即用
+- 包含 6 個測試患者數據
+
+### 線上部署（Vercel/Supabase）
+- 需要配置 `POSTGRES_URL` 環境變量
+- 使用 `sql/init.sql` 初始化數據庫
+- 如果未初始化數據庫，系統會自動回退到模擬數據
+
+**重要**：如果您已連接 Supabase 但尚未運行 `sql/init.sql`，系統仍會使用本地模擬數據，因此測試賬號仍然有效。
+
+---
+
 ## 🧪 測試
 
 詳見 [TESTING.md](./TESTING.md)

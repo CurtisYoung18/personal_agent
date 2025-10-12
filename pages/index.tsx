@@ -61,12 +61,43 @@ export default function LoginPage() {
   return (
     <div className="login-container">
       <div className="login-card">
+        {/* Logo 和標題 */}
+        <div className="login-logo-section">
+          <img 
+            src="/卫生署logo.png" 
+            alt="香港特別行政區政府 衛生署 衛生防護中心" 
+            className="chp-logo"
+          />
+          <div className="login-title-section">
+            <h1>食物中毒調查問卷</h1>
+            <p className="demo-badge">Demo 演示平台</p>
+          </div>
+        </div>
+
+        <div className="login-divider"></div>
+
         <div className="login-header">
-          <h1>患者身份驗證</h1>
-          <p>請輸入您的電郵和電話以繼續</p>
+          <h2>患者身份驗證</h2>
+          <p>請輸入您的電話號碼以繼續訪談</p>
         </div>
 
         <form onSubmit={handleSubmit} className="login-form">
+          <div className="form-group">
+            <label htmlFor="phone">電話號碼 *</label>
+            <input
+              id="phone"
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="例如：9123 4567"
+              required
+              disabled={loading}
+            />
+            <small style={{color: '#718096', fontSize: '12px', marginTop: '4px'}}>
+              請輸入 8 位數字（無需加區號 +852）
+            </small>
+          </div>
+
           <div className="form-group">
             <label htmlFor="email">電郵地址（可選）</label>
             <input
@@ -74,33 +105,21 @@ export default function LoginPage() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="example@email.com"
+              placeholder="例如：patient@example.com"
               disabled={loading}
             />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="phone">電話號碼</label>
-            <input
-              id="phone"
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="99998888"
-              required
-              disabled={loading}
-            />
-            <small style={{color: '#718096', fontSize: '12px', marginTop: '4px'}}>
-              請輸入電話號碼（不需要加 +852）
-            </small>
           </div>
 
           {error && <div className="error-message">{error}</div>}
 
           <button type="submit" className="submit-btn" disabled={loading}>
-            {loading ? '驗證中...' : '登入'}
+            {loading ? '驗證中...' : '開始訪談'}
           </button>
         </form>
+
+        <div className="login-footer">
+          <small>🔒 您的資料將會被保密處理</small>
+        </div>
       </div>
     </div>
   )

@@ -6,7 +6,31 @@
 
 ## 📱 線上測試
 
-**項目 URL**: https://your-vercel-url.vercel.app
+**患者登入頁面**: https://your-vercel-url.vercel.app  
+**管理後台**: https://your-vercel-url.vercel.app/admin
+
+---
+
+## ❓ 常見問題
+
+### Q1: 管理後台在哪裡？
+**A**: 在主域名後加 `/admin`  
+例如：`https://your-project.vercel.app/admin`
+
+### Q2: 為什麼連接了 Supabase 還能用測試賬號登入？
+**A**: 系統設計了智能回退機制：
+- 如果檢測到 `POSTGRES_URL` 環境變量，會嘗試連接真實數據庫
+- 如果數據庫連接失敗或沒有數據，自動使用 `lib/db-mock.ts` 中的模擬數據
+- 這樣可以確保在數據庫未初始化時系統仍可正常測試
+
+**要使用真實數據庫**，需要：
+1. 在 Supabase 或 Vercel Storage 中創建數據庫
+2. 連接到 Vercel 項目（自動添加環境變量）
+3. 在 Supabase SQL Editor 或 Vercel Storage Query 中運行 `sql/init.sql`
+4. 重新部署項目
+
+### Q3: Logo 在哪裡顯示？
+**A**: Logo 只在患者登入頁面顯示，登入成功後不顯示（節省空間給 Agent 對話）
 
 ---
 
