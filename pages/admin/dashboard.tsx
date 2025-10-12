@@ -24,7 +24,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [showModal, setShowModal] = useState(false)
-  const [showAgentModal, setShowAgentModal] = useState(false)
+  const [showDataManagement, setShowDataManagement] = useState(false)
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add')
   const [currentPatient, setCurrentPatient] = useState<Partial<Patient>>({})
 
@@ -135,9 +135,10 @@ export default function AdminDashboard() {
   }
 
   const filteredPatients = patients.filter((patient) =>
-    patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.phone.includes(searchTerm)
+    patient.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    patient.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    patient.phone?.includes(searchTerm) ||
+    patient.caseNumber?.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   if (loading) {
@@ -152,33 +153,72 @@ export default function AdminDashboard() {
   return (
     <div className="admin-dashboard">
       <header className="admin-header-bar">
-        <div className="admin-title">
-          <h1>📊 患者數據管理</h1>
-          <p>共 {patients.length} 位患者</p>
+        <div className="admin-header-left">
+          <img src="/logo.png" alt="香港衛生署" className="header-logo" />
+          <div className="admin-title">
+            <h1>香港衛生署內部系統</h1>
+            <p>管理員控制台</p>
+          </div>
         </div>
-        <button onClick={handleLogout} className="logout-btn">
-          登出
-        </button>
+        <div className="admin-header-right">
+          {!showDataManagement ? (
+            <button 
+              onClick={() => setShowDataManagement(true)} 
+              className="nav-to-data-btn"
+            >
+              數據管理
+            </button>
+          ) : (
+            <button 
+              onClick={() => setShowDataManagement(false)} 
+              className="nav-to-agent-btn"
+            >
+              ← AI 助手
+            </button>
+          )}
+          <button onClick={handleLogout} className="logout-btn">
+            登出
+          </button>
+        </div>
       </header>
 
-      <div className="admin-controls">
-        <div className="search-box">
-          <input
-            type="text"
-            placeholder="🔍 搜尋患者姓名、電郵或電話..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+      <div className="admin-content-wrapper">
+        {/* Agent 頁面 */}
+        <div className={`admin-view agent-view ${!showDataManagement ? 'active' : ''}`}>
+          <div className="agent-container">
+            <div className="glass-card">
+              <iframe
+                src="https://www.gptbots.ai/widget/eea8knlvhzyypa2hjsmkbod/chat.html"
+                width="100%"
+                height="100%"
+                allow="microphone *"
+                style={{ border: 'none', borderRadius: '16px' }}
+                title="Internal Agent"
+              />
+            </div>
+          </div>
         </div>
-        <div className="admin-actions">
-          <button onClick={() => setShowAgentModal(true)} className="agent-btn">
-            💬 內部 Agent
-          </button>
-          <button onClick={handleAddPatient} className="add-btn">
-            ➕ 新增患者
-          </button>
-        </div>
-      </div>
+
+        {/* 數據管理頁面 */}
+        <div className={`admin-view data-view ${showDataManagement ? 'active' : ''}`}>
+          <div className="data-header">
+            <h2>患者數據管理</h2>
+            <span className="count-badge">{patients.length} 位患者</span>
+          </div>
+
+          <div className="data-controls">
+            <div className="search-box">
+              <input
+                type="text"
+                placeholder="搜尋患者姓名、電郵、電話或案例編號..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <button onClick={handleAddPatient} className="add-btn">
+              <span>＋</span> 新增患者
+            </button>
+          </div>
 
       <div className="patients-table-container">
         <table className="patients-table">
@@ -228,6 +268,8 @@ export default function AdminDashboard() {
             <p>📭 暫無患者數據</p>
           </div>
         )}
+      </div>
+        </div>
       </div>
 
       {showModal && (
@@ -402,29 +444,6 @@ export default function AdminDashboard() {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-
-      {showAgentModal && (
-        <div className="agent-modal-overlay" onClick={() => setShowAgentModal(false)}>
-          <div className="agent-modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="agent-modal-header">
-              <h2>💬 內部專用 Agent</h2>
-              <button onClick={() => setShowAgentModal(false)} className="close-btn">
-                ✕
-              </button>
-            </div>
-            <div className="agent-iframe-container">
-              <iframe
-                src="https://www.gptbots.ai/widget/eea8knlvhzyypa2hjsmkbod/chat.html"
-                width="100%"
-                height="100%"
-                allow="microphone *"
-                style={{ border: 'none', borderRadius: '8px' }}
-                title="Internal Agent"
-              />
-            </div>
           </div>
         </div>
       )}
