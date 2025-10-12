@@ -12,6 +12,10 @@ interface Patient {
   address: string
   occupation: string
   medical_history: string
+  caseNumber?: string
+  eventLocation?: string
+  eventDate?: string
+  eventSummary?: string
 }
 
 export default function AdminDashboard() {
@@ -39,7 +43,15 @@ export default function AdminDashboard() {
       const response = await fetch('/api/admin/patients')
       const data = await response.json()
       if (data.success) {
-        setPatients(data.patients)
+        // 轉換後端字段為前端格式
+        const patientsWithConvertedFields = data.patients.map((p: any) => ({
+          ...p,
+          caseNumber: p.case_number,
+          eventLocation: p.event_location,
+          eventDate: p.event_date,
+          eventSummary: p.event_summary,
+        }))
+        setPatients(patientsWithConvertedFields)
       }
     } catch (error) {
       console.error('Failed to fetch patients:', error)
@@ -92,11 +104,20 @@ export default function AdminDashboard() {
 
     const method = modalMode === 'add' ? 'POST' : 'PUT'
     
+    // 轉換字段名稱為後端格式
+    const patientData = {
+      ...currentPatient,
+      case_number: currentPatient.caseNumber,
+      event_location: currentPatient.eventLocation,
+      event_date: currentPatient.eventDate,
+      event_summary: currentPatient.eventSummary,
+    }
+    
     try {
       const response = await fetch('/api/admin/patients', {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(currentPatient),
+        body: JSON.stringify(patientData),
       })
 
       if (response.ok) {
@@ -303,24 +324,66 @@ export default function AdminDashboard() {
               </div>
 
               <div className="form-group">
-                <label>地址</label>
-                <input
-                  type="text"
-                  value={currentPatient.address || ''}
-                  onChange={(e) =>
-                    setCurrentPatient({ ...currentPatient, address: e.target.value })
-                  }
-                />
-              </div>
-
-              <div className="form-group">
                 <label>病史</label>
                 <textarea
                   value={currentPatient.medical_history || ''}
                   onChange={(e) =>
                     setCurrentPatient({ ...currentPatient, medical_history: e.target.value })
                   }
-                  rows={4}
+                  rows={3}
+                />
+              </div>
+
+              <hr style={{ margin: '20px 0', border: 'none', borderTop: '1px solid #e5e7eb' }} />
+              <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '15px' }}>🔍 案例資訊</h3>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>案例編號 *</label>
+                  <input
+                    type="text"
+                    value={currentPatient.caseNumber || ''}
+                    onChange={(e) =>
+                      setCurrentPatient({ ...currentPatient, caseNumber: e.target.value })
+                    }
+                    placeholder="HKDH-2024-1008-001"
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>事件日期</label>
+                  <input
+                    type="date"
+                    value={currentPatient.eventDate || ''}
+                    onChange={(e) =>
+                      setCurrentPatient({ ...currentPatient, eventDate: e.target.value })
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>事件地點</label>
+                <input
+                  type="text"
+                  value={currentPatient.eventLocation || ''}
+                  onChange={(e) =>
+                    setCurrentPatient({ ...currentPatient, eventLocation: e.target.value })
+                  }
+                  placeholder="例如：The Seafood House, 尖沙咀"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>事件詳情 *</label>
+                <input
+                  type="text"
+                  value={currentPatient.eventSummary || ''}
+                  onChange={(e) =>
+                    setCurrentPatient({ ...currentPatient, eventSummary: e.target.value })
+                  }
+                  placeholder="例如：The Seafood House 10月8日晚宴"
+                  required
                 />
               </div>
 
