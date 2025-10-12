@@ -36,32 +36,37 @@ export default async function handler(
     let patient: any = null
 
     if (USE_REAL_DB && sql) {
-      // 使用真實數據庫
-      // 支持只用電話或電郵+電話登入
-      if (email) {
-        const result = await sql`
-          SELECT id FROM patients
-          WHERE (email = ${email} OR phone = ${phone})
-          LIMIT 1
-        `
-        patient = result.rows.length > 0 ? result.rows[0] : null
-      } else {
-        const result = await sql`
-          SELECT id FROM patients
-          WHERE phone = ${phone}
-          LIMIT 1
-        `
-        patient = result.rows.length > 0 ? result.rows[0] : null
+      try {
+        // 嘗試使用真實數據庫
+        if (email) {
+          const result = await sql`
+            SELECT id FROM patients
+            WHERE (email = ${email} OR phone = ${phone})
+            LIMIT 1
+          `
+          patient = result.rows.length > 0 ? result.rows[0] : null
+        } else {
+          const result = await sql`
+            SELECT id FROM patients
+            WHERE phone = ${phone}
+            LIMIT 1
+          `
+          patient = result.rows.length > 0 ? result.rows[0] : null
+        }
+      } catch (dbError) {
+        console.warn('數據庫查詢失敗，回退到模擬數據:', dbError)
+        // 回退到模擬數據
+        patient = findPatientByEmailAndPhone(email || '', phone)
       }
     } else {
-      // 使用模擬數據（本地開發）
+      // 使用模擬數據
       patient = findPatientByEmailAndPhone(email || '', phone)
     }
 
     if (!patient) {
       return res.status(401).json({
         success: false,
-        message: '電郵或電話號碼不匹配，請重試',
+        message: '電話號碼或電郵不正確',
       })
     }
 

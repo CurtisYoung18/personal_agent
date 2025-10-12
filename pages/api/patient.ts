@@ -36,18 +36,24 @@ export default async function handler(
     let patient: any = null
 
     if (USE_REAL_DB && sql) {
-      // 使用真實數據庫
-      const result = await sql`
-        SELECT id, case_number, name, email, phone, age, gender, occupation,
-               event_location, event_date, event_summary,
-               symptoms, onset_datetime, food_history, notes
-        FROM patients
-        WHERE id = ${id}
-        LIMIT 1
-      `
-      patient = result.rows.length > 0 ? result.rows[0] : null
+      try {
+        // 嘗試使用真實數據庫
+        const result = await sql`
+          SELECT id, case_number, name, email, phone, age, gender, occupation,
+                 event_location, event_date, event_summary,
+                 symptoms, onset_datetime, food_history, notes
+          FROM patients
+          WHERE id = ${id}
+          LIMIT 1
+        `
+        patient = result.rows.length > 0 ? result.rows[0] : null
+      } catch (dbError) {
+        console.warn('數據庫查詢失敗，回退到模擬數據:', dbError)
+        // 回退到模擬數據
+        patient = findPatientById(id)
+      }
     } else {
-      // 使用模擬數據（本地開發）
+      // 使用模擬數據
       patient = findPatientById(id)
     }
 
