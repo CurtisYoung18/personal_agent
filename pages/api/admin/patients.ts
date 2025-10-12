@@ -25,43 +25,53 @@ export default async function handler(
       let patients: any[] = []
 
       if (USE_REAL_DB && sql) {
-        const result = await sql`
-          SELECT id, case_number, name, email, phone, age, gender, occupation, 
-                 event_location, event_date, event_summary, symptoms, 
-                 onset_datetime, food_history, notes
-          FROM patients
-          ORDER BY id ASC
-        `
-        patients = result.rows.map((row: any) => ({
-          id: row.id.toString(),
-          case_number: row.case_number,
-          name: row.name,
-          email: row.email,
-          phone: row.phone,
-          age: row.age,
-          gender: row.gender,
-          occupation: row.occupation,
-          event_location: row.event_location,
-          event_date: row.event_date,
-          event_summary: row.event_summary,
-          symptoms: row.symptoms,
-          onset_datetime: row.onset_datetime,
-          food_history: row.food_history,
-          notes: row.notes,
-        }))
+        try {
+          console.log('🔍 Admin: 嘗試從數據庫獲取患者列表...')
+          const result = await sql`
+            SELECT id, case_number, name, email, phone, age, gender, occupation, 
+                   event_location, event_date, event_summary, symptoms, 
+                   onset_datetime, food_history, notes
+            FROM patients
+            ORDER BY id ASC
+          `
+          console.log(`✅ Admin: 數據庫查詢成功，找到 ${result.rows.length} 條記錄`)
+          
+          patients = result.rows.map((row: any) => ({
+            id: row.id.toString(),
+            case_number: row.case_number,
+            name: row.name,
+            email: row.email,
+            phone: row.phone,
+            age: row.age,
+            gender: row.gender,
+            occupation: row.occupation,
+            event_location: row.event_location,
+            event_date: row.event_date,
+            event_summary: row.event_summary,
+            symptoms: row.symptoms,
+            onset_datetime: row.onset_datetime,
+            food_history: row.food_history,
+            notes: row.notes,
+          }))
+        } catch (dbError) {
+          console.error('❌ Admin: 數據庫查詢失敗，回退到模擬數據:', dbError)
+          patients = mockPatients
+        }
       } else {
+        console.log('📋 Admin: 使用模擬數據')
         patients = mockPatients
       }
 
+      console.log(`📊 Admin: 返回 ${patients.length} 條患者記錄`)
       return res.status(200).json({
         success: true,
         patients,
       })
     } catch (error) {
-      console.error('Failed to fetch patients:', error)
+      console.error('❌ Admin: 獲取患者列表失敗:', error)
       return res.status(500).json({
         success: false,
-        message: '获取患者列表失败',
+        message: '獲取患者列表失敗',
       })
     }
   }
