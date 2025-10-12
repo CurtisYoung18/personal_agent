@@ -24,6 +24,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [showModal, setShowModal] = useState(false)
+  const [showAgentModal, setShowAgentModal] = useState(false)
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add')
   const [currentPatient, setCurrentPatient] = useState<Partial<Patient>>({})
 
@@ -169,9 +170,14 @@ export default function AdminDashboard() {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <button onClick={handleAddPatient} className="add-btn">
-          ➕ 新增患者
-        </button>
+        <div className="admin-actions">
+          <button onClick={() => setShowAgentModal(true)} className="agent-btn">
+            💬 內部 Agent
+          </button>
+          <button onClick={handleAddPatient} className="add-btn">
+            ➕ 新增患者
+          </button>
+        </div>
       </div>
 
       <div className="patients-table-container">
@@ -396,6 +402,29 @@ export default function AdminDashboard() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {showAgentModal && (
+        <div className="agent-modal-overlay" onClick={() => setShowAgentModal(false)}>
+          <div className="agent-modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="agent-modal-header">
+              <h2>💬 內部專用 Agent</h2>
+              <button onClick={() => setShowAgentModal(false)} className="close-btn">
+                ✕
+              </button>
+            </div>
+            <div className="agent-iframe-container">
+              <iframe
+                src="https://www.gptbots.ai/widget/eea8knlvhzyypa2hjsmkbod/chat.html"
+                width="100%"
+                height="100%"
+                allow="microphone *"
+                style={{ border: 'none', borderRadius: '8px' }}
+                title="Internal Agent"
+              />
+            </div>
           </div>
         </div>
       )}
