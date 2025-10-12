@@ -7,6 +7,7 @@ export default function LoginPage() {
   const [phone, setPhone] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [showLoginForm, setShowLoginForm] = useState(false)
 
   // 檢查是否已有記住的用戶
   useEffect(() => {
@@ -59,66 +60,88 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="login-container">
-      <div className="login-card">
-        {/* Logo 和標題 */}
-        <div className="login-logo-section">
-          <img 
-            src="/卫生署logo.png" 
-            alt="香港特別行政區政府 衛生署 衛生防護中心" 
-            className="chp-logo"
-          />
-          <div className="login-title-section">
-            <h1>食物中毒調查問卷</h1>
-            <p className="demo-badge">Demo 演示平台</p>
+    <div className="page-container">
+      <div className={`page-wrapper ${showLoginForm ? 'flipped' : ''}`}>
+        {/* 正面：Logo 歡迎頁 */}
+        <div className="page-front">
+          <div className="welcome-card">
+            <img 
+              src="/卫生署logo.png" 
+              alt="香港特別行政區政府 衛生署 衛生防護中心" 
+              className="chp-logo"
+            />
+            <div className="welcome-content">
+              <h1>食物中毒調查問卷</h1>
+              <span className="demo-badge">Demo 演示平台</span>
+              <p className="welcome-desc">
+                歡迎使用香港衛生署食物中毒調查系統
+              </p>
+              <button 
+                className="enter-btn"
+                onClick={() => setShowLoginForm(true)}
+              >
+                進入登入
+              </button>
+            </div>
           </div>
         </div>
 
-        <div className="login-divider"></div>
+        {/* 背面：登入表單 */}
+        <div className="page-back">
+          <div className="login-card">
+            <button 
+              className="back-btn"
+              onClick={() => setShowLoginForm(false)}
+              type="button"
+            >
+              ← 返回
+            </button>
 
-        <div className="login-header">
-          <h2>患者身份驗證</h2>
-          <p>請輸入您的電話號碼以繼續訪談</p>
-        </div>
+            <div className="login-header">
+              <h2>患者身份驗證</h2>
+              <p>請輸入您的電話號碼以繼續訪談</p>
+            </div>
 
-        <form onSubmit={handleSubmit} className="login-form">
-          <div className="form-group">
-            <label htmlFor="phone">電話號碼 *</label>
-            <input
-              id="phone"
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="例如：9123 4567"
-              required
-              disabled={loading}
-            />
-            <small style={{color: '#718096', fontSize: '12px', marginTop: '4px'}}>
-              請輸入 8 位數字（無需加區號 +852）
-            </small>
+            <form onSubmit={handleSubmit} className="login-form">
+              <div className="form-group">
+                <label htmlFor="phone">電話號碼 *</label>
+                <input
+                  id="phone"
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="例如：9123 4567"
+                  required
+                  disabled={loading}
+                />
+                <small style={{color: '#718096', fontSize: '12px', marginTop: '4px'}}>
+                  請輸入 8 位數字（無需加區號 +852）
+                </small>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="email">電郵地址（可選）</label>
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="例如：patient@example.com"
+                  disabled={loading}
+                />
+              </div>
+
+              {error && <div className="error-message">{error}</div>}
+
+              <button type="submit" className="submit-btn" disabled={loading}>
+                {loading ? '驗證中...' : '開始訪談'}
+              </button>
+            </form>
+
+            <div className="login-footer">
+              <small>🔒 您的資料將會被保密處理</small>
+            </div>
           </div>
-
-          <div className="form-group">
-            <label htmlFor="email">電郵地址（可選）</label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="例如：patient@example.com"
-              disabled={loading}
-            />
-          </div>
-
-          {error && <div className="error-message">{error}</div>}
-
-          <button type="submit" className="submit-btn" disabled={loading}>
-            {loading ? '驗證中...' : '開始訪談'}
-          </button>
-        </form>
-
-        <div className="login-footer">
-          <small>🔒 您的資料將會被保密處理</small>
         </div>
       </div>
     </div>
