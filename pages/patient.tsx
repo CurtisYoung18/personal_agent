@@ -47,22 +47,21 @@ export default function PatientPage() {
     fetchPatientInfo(id as string)
   }, [id])
 
-  // 使用 useEffect 监听 iframe 加载完成后，通过 postMessage 发送患者属性
+  // 使用 useEffect 监听 iframe 加载完成后，同步用户属性
   useEffect(() => {
-    if (!patientInfo) return
+    if (!patientInfo || !iframeUrl) return
 
-    // 延迟发送，确保 iframe 已完全加载
+    // 延迟同步，确保 iframe 已完全加载
     const timer = setTimeout(() => {
       const iframe = document.querySelector('iframe')
       if (iframe && iframe.contentWindow) {
         // 根據 GPTBots 用戶屬性字段構建數據
-        // 對應圖片中的字段：age, case_id, detail, mobile, patient_name
         const userProperties = {
-          age: patientInfo.age?.toString() || '',              // 年齡
-          case_id: patientInfo.caseNumber || '',               // 案例編號
-          detail: patientInfo.eventSummary || '',              // 事件總結（如：The Seafood House 10月8日晚宴）
-          mobile: patientInfo.phone || '',                     // 電話
-          patient_name: patientInfo.name || '',                // 患者姓名
+          age: patientInfo.age?.toString() || '',
+          case_id: patientInfo.caseNumber || '',
+          detail: patientInfo.eventSummary || '',
+          mobile: patientInfo.phone || '',
+          patient_name: patientInfo.name || '',
         }
 
         // 發送用戶 ID（使用案例編號）
@@ -74,12 +73,16 @@ export default function PatientPage() {
           '*'
         )
 
-        console.log('患者資訊已傳送至 iframe:', userProperties)
+        console.log('📤 患者資訊已傳送至 iframe:', userProperties)
+        
+        // 立即同步用戶屬性到 GPTBots
+        const userId = patientInfo.caseNumber || patientInfo.phone
+        syncUserProperties(userId, patientInfo)
       }
-    }, 1000)
+    }, 1500)
 
     return () => clearTimeout(timer)
-  }, [patientInfo])
+  }, [patientInfo, iframeUrl])
 
   // 同步用戶屬性到 GPTBots（可選）
   const syncUserProperties = async (userId: string, patient: any) => {
@@ -137,8 +140,8 @@ export default function PatientPage() {
         
         const fullUrl = `${baseUrl}?${params.toString()}`
         
-        console.log('📤 iframe URL:', fullUrl)
-        console.log('📋 患者屬性（需要通過 API 傳遞）:', {
+        console.log('🔗 iframe URL:', fullUrl)
+        console.log('📋 患者屬性（將通過 useEffect 同步）:', {
           age: data.patient.age?.toString() || '',
           case_id: data.patient.caseNumber || '',
           detail: data.patient.eventSummary || '',
@@ -147,9 +150,7 @@ export default function PatientPage() {
         })
         
         setIframeUrl(fullUrl)
-        
-        // 嘗試同步用戶屬性到 GPTBots（如果配置了 API Key）
-        syncUserProperties(userId, data.patient)
+        // 屬性同步將在 useEffect 中執行，確保 iframe 已加載
       } else {
         // 驗證失敗，清除會話並返回登錄頁
         localStorage.removeItem('hp_patient_session')
