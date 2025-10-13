@@ -47,7 +47,7 @@ export default function PatientPage() {
     initializeConversation()
   }, [patientInfo, iframeUrl])
 
-  // 初始化對話：創建會話 → 同步屬性 → 發送歡迎消息 → 等待回復 → 顯示 iframe
+  // 初始化對話：同步屬性 → 準備 iframe → 發送歡迎消息
   const initializeConversation = async () => {
     setIsInitializing(true)
     setInitMessage('正在建立連接...')
@@ -60,31 +60,26 @@ export default function PatientPage() {
       
       setInitMessage(`您好 ${patientInfo!.name}，正在為您準備訪談...`)
       
-      // Step 2: 通過 API 發送歡迎消息並等待回复
-      console.log('📤 步驟 2: 發送歡迎消息...')
-      const aiResponse = await sendMessageViaAPI(userId, `你好，我是${patientInfo!.name}`)
+      // Step 2: 模擬 API 調用以顯示進度（實際消息將在 iframe 中發送）
+      console.log('📤 步驟 2: 準備訪談環境...')
+      await sendMessageViaAPI(userId, `你好，我是${patientInfo!.name}`)
       
-      if (aiResponse) {
-        console.log('✅ AI 已回复:', aiResponse)
-        setInitMessage('準備完成，正在進入訪談...')
-        
-        // Step 3: 短暫顯示成功消息後，顯示 iframe
-        setTimeout(() => {
-          setShowIframe(true)
-          setIsInitializing(false)
-        }, 800)
-      } else {
-        throw new Error('AI 未能正常回复')
-      }
-    } catch (error) {
-      console.error('❌ 初始化對話失敗:', error)
-      setInitMessage('連接失敗，正在重試...')
+      setInitMessage('準備完成，正在進入訪談...')
       
-      // 3秒後重試或直接顯示 iframe
+      // Step 3: 顯示 iframe
       setTimeout(() => {
         setShowIframe(true)
         setIsInitializing(false)
-      }, 3000)
+      }, 800)
+    } catch (error) {
+      console.error('❌ 初始化對話失敗:', error)
+      setInitMessage('正在進入訪談...')
+      
+      // 即使出錯也顯示 iframe
+      setTimeout(() => {
+        setShowIframe(true)
+        setIsInitializing(false)
+      }, 1000)
     }
   }
 
@@ -99,9 +94,14 @@ export default function PatientPage() {
 
       const data = await response.json()
       
+      console.log('📥 API 響應:', data)
+      
       if (data.success && data.response) {
         return data.response
       }
+      
+      // 記錄詳細錯誤
+      console.error('❌ API 返回錯誤:', data)
       return null
     } catch (error) {
       console.error('⚠️ 發送消息失敗:', error)
@@ -227,6 +227,56 @@ export default function PatientPage() {
       </div>
     )
   }
+
+  // 監聽 iframe 加載並自動發送歡迎消息
+  useEffect(() => {
+    if (!showIframe || !patientInfo) return
+
+    const iframe = document.querySelector('iframe') as HTMLIFrameElement
+    if (!iframe) return
+
+    const handleIframeLoad = () => {
+      console.log('🎬 iframe 已加載，發送歡迎消息')
+      
+      // 等待 1 秒確保 iframe 完全初始化
+      setTimeout(() => {
+        if (iframe && iframe.contentWindow) {
+          // 發送用戶 ID
+          iframe.contentWindow.postMessage(
+            JSON.stringify({ 
+              type: 'UserId', 
+              data: patientInfo.caseNumber || patientInfo.phone 
+            }),
+            '*'
+          )
+          
+          // 再等待 0.5 秒後發送歡迎消息
+          setTimeout(() => {
+            iframe.contentWindow?.postMessage(
+              JSON.stringify({
+                type: 'sendMessage',
+                data: `你好，我是${patientInfo.name}`
+              }),
+              '*'
+            )
+            console.log('👋 已發送歡迎消息:', `你好，我是${patientInfo.name}`)
+          }, 500)
+        }
+      }, 1000)
+    }
+
+    // 如果 iframe 已經加載完成
+    if (iframe.contentDocument?.readyState === 'complete') {
+      handleIframeLoad()
+    } else {
+      // 否則監聽 load 事件
+      iframe.addEventListener('load', handleIframeLoad)
+    }
+
+    return () => {
+      iframe.removeEventListener('load', handleIframeLoad)
+    }
+  }, [showIframe, patientInfo])
 
   // iframe 顯示階段（帶淡入動畫）
   return (

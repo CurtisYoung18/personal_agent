@@ -31,8 +31,11 @@ export default async function handler(
   try {
     // Step 1: 創建對話
     console.log('📤 創建對話 for user:', userId);
+    console.log('🔑 Using API Key:', GPTBOTS_API_KEY ? `${GPTBOTS_API_KEY.substring(0, 10)}...` : 'NOT SET');
+    console.log('🌐 Endpoint:', GPTBOTS_ENDPOINT);
+    
     const createConversationResponse = await fetch(
-      `https://api-${GPTBOTS_ENDPOINT}.gptbots.ai/v1/bot/conversation/create`,
+      `https://api-${GPTBOTS_ENDPOINT}.gptbots.ai/v1/conversation`,
       {
         method: 'POST',
         headers: {
@@ -46,10 +49,16 @@ export default async function handler(
     );
 
     const conversationData = await createConversationResponse.json();
+    
+    console.log('📥 創建對話響應:', conversationData);
 
     if (!createConversationResponse.ok || !conversationData.conversation_id) {
-      console.error('❌ 創建對話失敗:', conversationData);
-      throw new Error('Failed to create conversation');
+      console.error('❌ 創建對話失敗:', {
+        status: createConversationResponse.status,
+        statusText: createConversationResponse.statusText,
+        data: conversationData
+      });
+      throw new Error(`Failed to create conversation: ${JSON.stringify(conversationData)}`);
     }
 
     const conversationId = conversationData.conversation_id;
@@ -71,7 +80,12 @@ export default async function handler(
           messages: [
             {
               role: 'user',
-              content: message,
+              content: [
+                {
+                  type: 'text',
+                  text: message,
+                }
+              ],
             },
           ],
         }),
@@ -79,6 +93,8 @@ export default async function handler(
     );
 
     const messageData = await sendMessageResponse.json();
+    
+    console.log('📥 發送消息響應:', messageData);
 
     if (!sendMessageResponse.ok) {
       console.error('❌ 發送消息失敗:', messageData);
