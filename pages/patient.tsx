@@ -30,13 +30,13 @@ export default function PatientPage() {
   const [initMessage, setInitMessage] = useState('')
   const hasInitialized = useRef(false)
 
+  // Effect 1: 加載患者信息
   useEffect(() => {
     if (!id) {
       router.push('/')
       return
     }
 
-    // 獲取患者信息
     const loadPatientInfo = async () => {
       try {
         const response = await fetch(`/api/patient?id=${id}`)
@@ -45,7 +45,6 @@ export default function PatientPage() {
         if (response.ok && data.success) {
           setPatientInfo(data.patient)
           
-          // 使用 GPTBots iframe URL
           const baseUrl = 'https://www.gptbots.ai/widget/eek1z5tclbpvaoak5609epw/chat.html'
           const userId = data.patient.caseNumber || data.patient.phone
           const userEmail = data.patient.email || ''
@@ -61,14 +60,6 @@ export default function PatientPage() {
           const fullUrl = `${baseUrl}?${params.toString()}`
           
           console.log('🔗 iframe URL:', fullUrl)
-          console.log('📋 患者屬性（將通過 useEffect 同步）:', {
-            age: data.patient.age?.toString() || '',
-            case_id: data.patient.caseNumber || '',
-            detail: data.patient.eventSummary || '',
-            mobile: data.patient.phone || '',
-            patient_name: data.patient.name || '',
-          })
-          
           setIframeUrl(fullUrl)
         } else {
           router.push('/')
@@ -85,19 +76,17 @@ export default function PatientPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
 
-  // 當獲取到患者信息後，初始化對話
+  // Effect 2: 初始化對話
   useEffect(() => {
     if (!patientInfo || !iframeUrl || hasInitialized.current) return
 
     hasInitialized.current = true
 
-    // 初始化對話：同步屬性 → 準備 iframe → 發送歡迎消息
     const initializeConversation = async () => {
       setIsInitializing(true)
       setInitMessage(`${patientInfo.name}，您好`)
 
       try {
-        // Step 1: 同步用戶屬性到 GPTBots
         const userId = patientInfo.caseNumber || patientInfo.phone
         console.log('📤 步驟 1: 同步用戶屬性...')
         
@@ -117,7 +106,6 @@ export default function PatientPage() {
         
         setInitMessage(`正在為 ${patientInfo.name} 準備問卷...`)
         
-        // Step 2: 創建對話並發送歡迎消息
         console.log('📤 步驟 2: 準備訪談環境...')
         const response = await fetch('/api/conversation/send', {
           method: 'POST',
@@ -130,7 +118,6 @@ export default function PatientPage() {
         
         setInitMessage('準備完成，正在進入問卷...')
         
-        // Step 3: 顯示 iframe
         setTimeout(() => {
           setShowIframe(true)
           setIsInitializing(false)
@@ -139,7 +126,6 @@ export default function PatientPage() {
         console.error('❌ 初始化對話失敗:', error)
         setInitMessage('正在進入問卷...')
         
-        // 即使出錯也顯示 iframe
         setTimeout(() => {
           setShowIframe(true)
           setIsInitializing(false)
@@ -147,10 +133,60 @@ export default function PatientPage() {
       }
     }
 
-    // 開始初始化流程
     initializeConversation()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [patientInfo, iframeUrl])
+
+  // Effect 3: iframe 加載後發送歡迎消息
+  useEffect(() => {
+    if (!showIframe || !patientInfo) return
+
+    const currentPatientInfo = patientInfo
+    const iframe = document.querySelector('iframe') as HTMLIFrameElement
+    if (!iframe) return
+
+    const handleIframeLoad = () => {
+      console.log('🎬 iframe 已加載，發送歡迎消息')
+      
+      setTimeout(() => {
+        if (iframe && iframe.contentWindow) {
+          iframe.contentWindow.postMessage(
+            JSON.stringify({ 
+              type: 'UserId', 
+              data: currentPatientInfo.caseNumber || currentPatientInfo.phone 
+            }),
+            '*'
+          )
+          
+          setTimeout(() => {
+            if (iframe && iframe.contentWindow) {
+              iframe.contentWindow.postMessage(
+                JSON.stringify({
+                  type: 'sendMessage',
+                  data: `你好，我是${currentPatientInfo.name}`
+                }),
+                '*'
+              )
+              console.log('👋 已發送歡迎消息:', `你好，我是${currentPatientInfo.name}`)
+            }
+          }, 500)
+        }
+      }, 1000)
+    }
+
+    if (iframe.contentDocument?.readyState === 'complete') {
+      handleIframeLoad()
+    } else {
+      iframe.addEventListener('load', handleIframeLoad)
+    }
+
+    return () => {
+      if (iframe) {
+        iframe.removeEventListener('load', handleIframeLoad)
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showIframe])
 
   // 處理登出
   const handleLogout = () => {
@@ -173,7 +209,7 @@ export default function PatientPage() {
     return null
   }
 
-  // 初始化階段（發送消息並等待回复）
+  // 初始化階段
   if (isInitializing || !showIframe) {
     return (
       <div className="initializing-container">
@@ -191,68 +227,9 @@ export default function PatientPage() {
     )
   }
 
-  // 監聽 iframe 加載並自動發送歡迎消息
-  useEffect(() => {
-    if (!showIframe || !patientInfo) return
-
-    // 捕獲當前的 patientInfo 到閉包中
-    const currentPatientInfo = patientInfo
-
-    const iframe = document.querySelector('iframe') as HTMLIFrameElement
-    if (!iframe) return
-
-    const handleIframeLoad = () => {
-      console.log('🎬 iframe 已加載，發送歡迎消息')
-      
-      // 等待 1 秒確保 iframe 完全初始化
-      setTimeout(() => {
-        if (iframe && iframe.contentWindow) {
-          // 發送用戶 ID
-          iframe.contentWindow.postMessage(
-            JSON.stringify({ 
-              type: 'UserId', 
-              data: currentPatientInfo.caseNumber || currentPatientInfo.phone 
-            }),
-            '*'
-          )
-          
-          // 再等待 0.5 秒後發送歡迎消息
-          setTimeout(() => {
-            if (iframe && iframe.contentWindow) {
-              iframe.contentWindow.postMessage(
-                JSON.stringify({
-                  type: 'sendMessage',
-                  data: `你好，我是${currentPatientInfo.name}`
-                }),
-                '*'
-              )
-              console.log('👋 已發送歡迎消息:', `你好，我是${currentPatientInfo.name}`)
-            }
-          }, 500)
-        }
-      }, 1000)
-    }
-
-    // 如果 iframe 已經加載完成
-    if (iframe.contentDocument?.readyState === 'complete') {
-      handleIframeLoad()
-    } else {
-      // 否則監聽 load 事件
-      iframe.addEventListener('load', handleIframeLoad)
-    }
-
-    return () => {
-      if (iframe) {
-        iframe.removeEventListener('load', handleIframeLoad)
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showIframe])
-
-  // iframe 顯示階段（帶淡入動畫）
+  // iframe 顯示階段
   return (
     <div className={`patient-container ${showIframe ? 'fade-in' : ''}`}>
-      {/* 頂部狀態欄 */}
       <div className="patient-header">
         <div className="patient-info">
           <span className="patient-name">{patientInfo.name}</span>
@@ -274,4 +251,3 @@ export default function PatientPage() {
     </div>
   )
 }
-
