@@ -92,12 +92,30 @@ export default function PatientPage() {
         console.log('📋 原始患者信息:', patientInfo)
         
         // 處理用戶屬性：年齡轉為整數並添加單位，null 值使用 "please provide"
+        // 格式化案發時間為可讀格式
+        const formatCaseTime = (datetime: string | null) => {
+          if (!datetime) return 'please provide'
+          try {
+            const date = new Date(datetime)
+            const year = date.getFullYear()
+            const month = String(date.getMonth() + 1).padStart(2, '0')
+            const day = String(date.getDate()).padStart(2, '0')
+            const hours = String(date.getHours()).padStart(2, '0')
+            const minutes = String(date.getMinutes()).padStart(2, '0')
+            return `${year}年${month}月${day}日 ${hours}:${minutes}`
+          } catch {
+            return 'please provide'
+          }
+        }
+
         const properties = {
           age: patientInfo.age ? `${Math.floor(patientInfo.age)}歲` : 'please provide',
           case_id: patientInfo.caseNumber || 'please provide',
           detail: patientInfo.eventSummary || 'please provide',
           mobile: patientInfo.phone || 'please provide',
           patient_name: patientInfo.name || 'please provide',
+          sex: patientInfo.gender || 'please provide',
+          case_time: formatCaseTime(patientInfo.onsetDatetime),
         }
 
         console.log('📤 準備同步的屬性:', properties)
