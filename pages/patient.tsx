@@ -43,45 +43,45 @@ export default function PatientPage() {
   useEffect(() => {
     if (!patientInfo || !iframeUrl || isInitializing || showIframe) return
 
+    // 初始化對話：同步屬性 → 準備 iframe → 發送歡迎消息
+    const initializeConversation = async () => {
+      setIsInitializing(true)
+      setInitMessage('正在建立連接...')
+
+      try {
+        // Step 1: 同步用戶屬性到 GPTBots
+        const userId = patientInfo.caseNumber || patientInfo.phone
+        console.log('📤 步驟 1: 同步用戶屬性...')
+        await syncUserProperties(userId, patientInfo)
+        
+        setInitMessage(`您好 ${patientInfo.name}，正在為您準備訪談...`)
+        
+        // Step 2: 模擬 API 調用以顯示進度（實際消息將在 iframe 中發送）
+        console.log('📤 步驟 2: 準備訪談環境...')
+        await sendMessageViaAPI(userId, `你好，我是${patientInfo.name}`)
+        
+        setInitMessage('準備完成，正在進入訪談...')
+        
+        // Step 3: 顯示 iframe
+        setTimeout(() => {
+          setShowIframe(true)
+          setIsInitializing(false)
+        }, 800)
+      } catch (error) {
+        console.error('❌ 初始化對話失敗:', error)
+        setInitMessage('正在進入訪談...')
+        
+        // 即使出錯也顯示 iframe
+        setTimeout(() => {
+          setShowIframe(true)
+          setIsInitializing(false)
+        }, 1000)
+      }
+    }
+
     // 開始初始化流程
     initializeConversation()
-  }, [patientInfo, iframeUrl])
-
-  // 初始化對話：同步屬性 → 準備 iframe → 發送歡迎消息
-  const initializeConversation = async () => {
-    setIsInitializing(true)
-    setInitMessage('正在建立連接...')
-
-    try {
-      // Step 1: 同步用戶屬性到 GPTBots
-      const userId = patientInfo!.caseNumber || patientInfo!.phone
-      console.log('📤 步驟 1: 同步用戶屬性...')
-      await syncUserProperties(userId, patientInfo!)
-      
-      setInitMessage(`您好 ${patientInfo!.name}，正在為您準備訪談...`)
-      
-      // Step 2: 模擬 API 調用以顯示進度（實際消息將在 iframe 中發送）
-      console.log('📤 步驟 2: 準備訪談環境...')
-      await sendMessageViaAPI(userId, `你好，我是${patientInfo!.name}`)
-      
-      setInitMessage('準備完成，正在進入訪談...')
-      
-      // Step 3: 顯示 iframe
-      setTimeout(() => {
-        setShowIframe(true)
-        setIsInitializing(false)
-      }, 800)
-    } catch (error) {
-      console.error('❌ 初始化對話失敗:', error)
-      setInitMessage('正在進入訪談...')
-      
-      // 即使出錯也顯示 iframe
-      setTimeout(() => {
-        setShowIframe(true)
-        setIsInitializing(false)
-      }, 1000)
-    }
-  }
+  }, [patientInfo, iframeUrl, isInitializing, showIframe])
 
   // 通過 Conversation API 發送消息並等待回复
   const sendMessageViaAPI = async (userId: string, message: string): Promise<string | null> => {
