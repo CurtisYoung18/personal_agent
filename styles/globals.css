@@ -894,46 +894,156 @@ body {
 .patients-table-container {
   padding: 24px 32px;
   overflow-x: auto;
+  overflow-y: visible;
+  position: relative;
+  /* 美化滚动条 */
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e0 #f7fafc;
+}
+
+.patients-table-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+.patients-table-container::-webkit-scrollbar-track {
+  background: #f7fafc;
+  border-radius: 4px;
+}
+
+.patients-table-container::-webkit-scrollbar-thumb {
+  background: #cbd5e0;
+  border-radius: 4px;
+}
+
+.patients-table-container::-webkit-scrollbar-thumb:hover {
+  background: #a0aec0;
 }
 
 .patients-table {
-  width: 100%;
+  width: max-content;
+  min-width: 100%;
   background: white;
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
 }
 
 .patients-table thead {
-  background: #f7fafc;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .patients-table th {
-  padding: 16px;
+  padding: 14px 16px;
   text-align: left;
   font-weight: 600;
-  color: #4a5568;
-  font-size: 13px;
+  color: white;
+  font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  border-bottom: 2px solid #e2e8f0;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+  white-space: nowrap;
+  position: relative;
+}
+
+.patients-table th.sticky-actions {
+  position: sticky;
+  right: 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: -4px 0 8px rgba(0, 0, 0, 0.1);
+  z-index: 11;
 }
 
 .patients-table td {
-  padding: 16px;
+  padding: 14px 16px;
   color: #2d3748;
-  font-size: 14px;
+  font-size: 13px;
   border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
+  background: white;
 }
 
-.patients-table tbody tr:hover {
+.patients-table td.sticky-actions {
+  position: sticky;
+  right: 0;
+  background: white;
+  box-shadow: -4px 0 8px rgba(0, 0, 0, 0.05);
+  z-index: 9;
+}
+
+.patients-table tbody tr:hover td {
   background: #f7fafc;
+}
+
+.patients-table tbody tr:hover td.sticky-actions {
+  background: #f7fafc;
+}
+
+/* 特殊列样式 */
+.patients-table .name-cell {
+  min-width: 120px;
+}
+
+.patients-table .email-cell {
+  min-width: 200px;
+  color: #4299e1;
+}
+
+.patients-table .case-number-cell {
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  color: #667eea;
+  min-width: 140px;
+}
+
+.patients-table .datetime-cell {
+  min-width: 150px;
+  color: #718096;
+  font-size: 12px;
+}
+
+.patients-table .location-cell {
+  min-width: 250px;
+  max-width: 300px;
+  white-space: normal;
+  line-height: 1.4;
+}
+
+.patients-table .summary-cell {
+  min-width: 200px;
+  max-width: 300px;
+  white-space: normal;
+  line-height: 1.4;
+}
+
+/* 性别徽章 */
+.gender-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.gender-badge.male {
+  background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+  color: white;
+}
+
+.gender-badge.female {
+  background: linear-gradient(135deg, #ed64a6 0%, #d53f8c 100%);
+  color: white;
 }
 
 .patients-table .actions {
   display: flex;
   gap: 8px;
+  min-width: 180px;
+  justify-content: center;
 }
 
 .edit-btn-small,

@@ -246,25 +246,50 @@ export default function AdminDashboard() {
             <tr>
               <th>ID</th>
               <th>姓名</th>
-              <th>電郵</th>
-              <th>電話</th>
               <th>年齡</th>
               <th>性別</th>
+              <th>電話</th>
+              <th>電郵</th>
               <th>職業</th>
-              <th>操作</th>
+              <th>案例編號</th>
+              <th>事件日期</th>
+              <th>案發時間</th>
+              <th>事件地點</th>
+              <th>事件詳情</th>
+              <th className="sticky-actions">操作</th>
             </tr>
           </thead>
           <tbody>
             {filteredPatients.map((patient) => (
               <tr key={patient.id}>
                 <td>{patient.id}</td>
-                <td>{patient.name}</td>
-                <td>{patient.email}</td>
+                <td className="name-cell"><strong>{patient.name}</strong></td>
+                <td>{patient.age || '-'}</td>
+                <td>
+                  <span className={`gender-badge ${patient.gender === '男' ? 'male' : 'female'}`}>
+                    {patient.gender || '-'}
+                  </span>
+                </td>
                 <td>{patient.phone}</td>
-                <td>{patient.age}</td>
-                <td>{patient.gender}</td>
-                <td>{patient.occupation}</td>
-                <td className="actions">
+                <td className="email-cell">{patient.email || '-'}</td>
+                <td>{patient.occupation || '-'}</td>
+                <td className="case-number-cell">{patient.caseNumber || '-'}</td>
+                <td>{patient.eventDate || '-'}</td>
+                <td className="datetime-cell">
+                  {patient.onsetDatetime 
+                    ? new Date(patient.onsetDatetime).toLocaleString('zh-HK', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })
+                    : '-'
+                  }
+                </td>
+                <td className="location-cell">{patient.eventLocation || '-'}</td>
+                <td className="summary-cell">{patient.eventSummary || '-'}</td>
+                <td className="actions sticky-actions">
                   <button
                     onClick={() => handleEditPatient(patient)}
                     className="edit-btn-small"
