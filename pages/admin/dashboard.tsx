@@ -394,7 +394,7 @@ export default function AdminDashboard() {
                     onChange={(e) =>
                       setCurrentPatient({ ...currentPatient, caseNumber: e.target.value })
                     }
-                    placeholder="HKDH-2024-1008-001"
+                    placeholder="HKDH-2025-1008-001"
                     required
                   />
                 </div>
@@ -423,14 +423,14 @@ export default function AdminDashboard() {
               </div>
 
               <div className="form-group">
-                <label>事件詳情 *</label>
+                <label>事件詳情 *（⚠️ 請包含年份，如：2025年10月8日）</label>
                 <input
                   type="text"
                   value={currentPatient.eventSummary || ''}
                   onChange={(e) =>
                     setCurrentPatient({ ...currentPatient, eventSummary: e.target.value })
                   }
-                  placeholder="例如：The Seafood House 10月8日晚宴"
+                  placeholder="例如：The Seafood House 2025年10月8日晚宴"
                   required
                 />
               </div>
