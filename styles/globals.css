@@ -260,76 +260,129 @@ body {
   cursor: not-allowed;
 }
 
-/* 患者頁面樣式 */
-.patient-container {
+/* ==================== 患者頁面樣式 ==================== */
+.patient-page {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  background: white;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   display: flex;
   flex-direction: column;
 }
 
-.patient-header {
+/* 頂部導航欄 */
+.patient-page-header {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: center;
-  padding: 12px 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  z-index: 10;
+  padding: 12px 24px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
   flex-shrink: 0;
+  gap: 16px;
 }
 
-.patient-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+.patient-page-header .header-logo img {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.patient-page-header .header-title {
   flex: 1;
-  flex-wrap: wrap;
+  min-width: 0;
 }
 
-.patient-name {
-  font-weight: 600;
+.patient-page-header .header-title h1 {
+  margin: 0;
   font-size: 16px;
+  font-weight: 700;
+  color: white;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.case-number {
-  font-size: 13px;
-  opacity: 0.9;
-  background: rgba(255, 255, 255, 0.2);
-  padding: 4px 12px;
-  border-radius: 12px;
+.patient-page-header .header-title p {
+  margin: 2px 0 0 0;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.8);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.event-info {
-  font-size: 12px;
-  opacity: 0.85;
-}
-
-.logout-btn-small {
-  padding: 6px 16px;
+.patient-page-header .logout-btn {
+  padding: 8px 16px;
   background: rgba(255, 255, 255, 0.2);
   color: white;
   border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   font-size: 13px;
   font-weight: 600;
   transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.patient-page-header .logout-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+/* 患者信息欄 */
+.patient-info-bar {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  padding: 12px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   flex-shrink: 0;
 }
 
-.logout-btn-small:hover {
-  background: rgba(255, 255, 255, 0.3);
+.patient-info-content {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  align-items: center;
 }
 
-.patient-iframe {
-  width: 100%;
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.info-label {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-value {
+  font-size: 14px;
+  color: white;
+  font-weight: 600;
+}
+
+/* iframe 容器 */
+.patient-content-wrapper {
   flex: 1;
-  border: none;
-  display: block;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  overflow: hidden;
+}
+
+.patient-agent-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
 }
 
 /* 加载状态样式 */
@@ -972,6 +1025,50 @@ body {
     height: 75vh;
   }
 
+  /* 患者頁面響應式 */
+  .patient-page-header {
+    padding: 10px 16px;
+    gap: 12px;
+  }
+
+  .patient-page-header .header-logo img {
+    width: 40px;
+    height: 40px;
+  }
+
+  .patient-page-header .header-title h1 {
+    font-size: 14px;
+  }
+
+  .patient-page-header .header-title p {
+    font-size: 10px;
+  }
+
+  .patient-page-header .logout-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .patient-info-bar {
+    padding: 10px 16px;
+  }
+
+  .patient-info-content {
+    gap: 16px;
+  }
+
+  .info-label {
+    font-size: 10px;
+  }
+
+  .info-value {
+    font-size: 13px;
+  }
+
+  .patient-content-wrapper {
+    padding: 12px;
+  }
+
   .data-controls {
     flex-direction: column;
     align-items: stretch;
@@ -1131,12 +1228,12 @@ body {
 }
 
 /* ==================== iframe 淡入動畫 ==================== */
-.patient-container {
+.patient-page {
   opacity: 0;
   animation: fadeInContainer 1s ease-out forwards;
 }
 
-.patient-container.fade-in {
+.patient-page.fade-in {
   opacity: 1;
 }
 

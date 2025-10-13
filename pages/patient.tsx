@@ -210,25 +210,55 @@ export default function PatientPage() {
 
   // iframe 顯示階段
   return (
-    <div className={`patient-container ${showIframe ? 'fade-in' : ''}`}>
-      <div className="patient-header">
-        <div className="patient-info">
-          <span className="patient-name">{patientInfo.name}</span>
-          <span className="case-number">{patientInfo.caseNumber}</span>
-          <span className="event-info">{patientInfo.eventSummary}</span>
+    <div className={`patient-page ${showIframe ? 'fade-in' : ''}`}>
+      {/* 頂部導航欄 */}
+      <header className="patient-page-header">
+        <div className="header-logo">
+          <img src="/logo.png" alt="香港衛生署" />
         </div>
-        <button onClick={handleLogout} className="logout-btn-small">
+        <div className="header-title">
+          <h1>香港衛生署內部系統</h1>
+          <p>智能化呈報傳染病平台</p>
+        </div>
+        <button onClick={handleLogout} className="logout-btn">
           登出
         </button>
+      </header>
+
+      {/* 患者信息欄 */}
+      <div className="patient-info-bar">
+        <div className="patient-info-content">
+          <div className="info-item">
+            <span className="info-label">受訪者</span>
+            <span className="info-value">{patientInfo.name}</span>
+          </div>
+          <div className="info-item">
+            <span className="info-label">案件編號</span>
+            <span className="info-value">{patientInfo.caseNumber}</span>
+          </div>
+          <div className="info-item">
+            <span className="info-label">事件</span>
+            <span className="info-value">{patientInfo.eventSummary}</span>
+          </div>
+        </div>
       </div>
 
-      <iframe
-        src={iframeUrl || 'about:blank'}
-        className="patient-iframe"
-        title="Patient Interview Agent"
-        allow="microphone *"
-        sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-modals"
-      />
+      {/* iframe 容器（毛玻璃效果） */}
+      <div className="patient-content-wrapper">
+        <div className="patient-agent-container">
+          <div className="glass-card">
+            <iframe
+              src={iframeUrl || 'about:blank'}
+              width="100%"
+              height="100%"
+              title="Patient Interview Agent"
+              allow="microphone *"
+              sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-modals"
+              style={{ border: 'none', borderRadius: '12px' }}
+            />
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
