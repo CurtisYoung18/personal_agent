@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/router'
 
 interface PatientInfo {
@@ -28,6 +28,7 @@ export default function PatientPage() {
   const [isInitializing, setIsInitializing] = useState(false)
   const [showIframe, setShowIframe] = useState(false)
   const [initMessage, setInitMessage] = useState('')
+  const hasInitialized = useRef(false)
 
   useEffect(() => {
     if (!id) {
@@ -37,11 +38,13 @@ export default function PatientPage() {
 
     // 獲取患者信息
     fetchPatientInfo(id as string)
-  }, [id])
+  }, [id, router])
 
   // 當獲取到患者信息後，初始化對話
   useEffect(() => {
-    if (!patientInfo || !iframeUrl || isInitializing || showIframe) return
+    if (!patientInfo || !iframeUrl || hasInitialized.current) return
+
+    hasInitialized.current = true
 
     // 初始化對話：同步屬性 → 準備 iframe → 發送歡迎消息
     const initializeConversation = async () => {
@@ -52,13 +55,33 @@ export default function PatientPage() {
         // Step 1: 同步用戶屬性到 GPTBots
         const userId = patientInfo.caseNumber || patientInfo.phone
         console.log('📤 步驟 1: 同步用戶屬性...')
-        await syncUserProperties(userId, patientInfo)
+        
+        const properties = {
+          age: patientInfo.age?.toString() || '',
+          case_id: patientInfo.caseNumber || '',
+          detail: patientInfo.eventSummary || '',
+          mobile: patientInfo.phone || '',
+          patient_name: patientInfo.name || '',
+        }
+
+        await fetch('/api/sync-properties', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, properties }),
+        })
         
         setInitMessage(`您好 ${patientInfo.name}，正在為您準備訪談...`)
         
-        // Step 2: 模擬 API 調用以顯示進度（實際消息將在 iframe 中發送）
+        // Step 2: 創建對話並發送歡迎消息
         console.log('📤 步驟 2: 準備訪談環境...')
-        await sendMessageViaAPI(userId, `你好，我是${patientInfo.name}`)
+        const response = await fetch('/api/conversation/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, message: `你好，我是${patientInfo.name}` }),
+        })
+
+        const data = await response.json()
+        console.log('📥 API 響應:', data)
         
         setInitMessage('準備完成，正在進入訪談...')
         
@@ -81,62 +104,8 @@ export default function PatientPage() {
 
     // 開始初始化流程
     initializeConversation()
-  }, [patientInfo, iframeUrl, isInitializing, showIframe])
+  }, [patientInfo, iframeUrl])
 
-  // 通過 Conversation API 發送消息並等待回复
-  const sendMessageViaAPI = async (userId: string, message: string): Promise<string | null> => {
-    try {
-      const response = await fetch('/api/conversation/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, message }),
-      })
-
-      const data = await response.json()
-      
-      console.log('📥 API 響應:', data)
-      
-      if (data.success && data.response) {
-        return data.response
-      }
-      
-      // 記錄詳細錯誤
-      console.error('❌ API 返回錯誤:', data)
-      return null
-    } catch (error) {
-      console.error('⚠️ 發送消息失敗:', error)
-      return null
-    }
-  }
-
-  // 同步用戶屬性到 GPTBots
-  const syncUserProperties = async (userId: string, patient: any) => {
-    try {
-      const properties = {
-        age: patient.age?.toString() || '',
-        case_id: patient.caseNumber || '',
-        detail: patient.eventSummary || '',
-        mobile: patient.phone || '',
-        patient_name: patient.name || '',
-      }
-
-      const response = await fetch('/api/sync-properties', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, properties }),
-      })
-
-      const data = await response.json()
-      
-      if (data.synced) {
-        console.log('✅ 用戶屬性已同步到 GPTBots')
-      } else {
-        console.log('ℹ️ 本地模式')
-      }
-    } catch (error) {
-      console.warn('⚠️ 屬性同步失敗:', error)
-    }
-  }
 
   const fetchPatientInfo = async (patientId: string) => {
     try {
