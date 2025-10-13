@@ -8,6 +8,7 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [showLoginForm, setShowLoginForm] = useState(false)
+  const [loginMethod, setLoginMethod] = useState<'phone' | 'email'>('phone') // 默認使用手機號登入
 
   // 移除自動登錄功能，每次都需要重新輸入密碼
 
@@ -17,12 +18,17 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
+      // 根據選擇的登入方式，只發送對應的字段
+      const payload = loginMethod === 'phone' 
+        ? { phone, email: '' }
+        : { email, phone: '' }
+
       const response = await fetch('/api/verify', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, phone }),
+        body: JSON.stringify(payload),
       })
 
       const data = await response.json()
@@ -31,13 +37,18 @@ export default function LoginPage() {
         // 驗證成功，跳轉到患者頁面（會顯示過渡動畫並創建對話）
         router.push(`/patient?id=${data.patientId}`)
       } else {
-        setError(data.message || '驗證失敗，請檢查您的電話號碼或電郵地址')
+        setError(data.message || '驗證失敗，請檢查您的資料')
       }
     } catch (err) {
       setError('網絡錯誤，請稍後重試')
     } finally {
       setLoading(false)
     }
+  }
+
+  const switchLoginMethod = () => {
+    setLoginMethod(prev => prev === 'phone' ? 'email' : 'phone')
+    setError('') // 清除錯誤
   }
 
   return (
@@ -80,44 +91,99 @@ export default function LoginPage() {
 
             <div className="login-header">
               <h2>患者身份驗證</h2>
-              <p>請使用電話號碼或電郵地址登入</p>
+              <p>請選擇登入方式</p>
+            </div>
+
+            {/* 登入方式切換器 */}
+            <div className="login-method-switch">
+              <button
+                type="button"
+                className={`method-btn ${loginMethod === 'phone' ? 'active' : ''}`}
+                onClick={() => setLoginMethod('phone')}
+                disabled={loading}
+              >
+                <span className="method-icon">📱</span>
+                <span>手機號碼</span>
+              </button>
+              <button
+                type="button"
+                className={`method-btn ${loginMethod === 'email' ? 'active' : ''}`}
+                onClick={() => setLoginMethod('email')}
+                disabled={loading}
+              >
+                <span className="method-icon">✉️</span>
+                <span>電郵地址</span>
+              </button>
+              <div 
+                className="method-slider" 
+                style={{ 
+                  transform: loginMethod === 'phone' ? 'translateX(0)' : 'translateX(100%)'
+                }}
+              />
             </div>
 
             <form onSubmit={handleSubmit} className="login-form">
-              <div className="form-group">
-                <label htmlFor="phone">電話號碼</label>
+              {/* 手機號輸入（帶動畫） */}
+              <div 
+                className={`form-group-animated ${loginMethod === 'phone' ? 'active' : ''}`}
+                style={{
+                  display: loginMethod === 'phone' ? 'block' : 'none'
+                }}
+              >
+                <label htmlFor="phone">
+                  <span className="label-icon">📱</span>
+                  電話號碼
+                </label>
                 <input
                   id="phone"
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  placeholder="例如：9123 4567"
+                  placeholder="請輸入 8 位數字"
                   disabled={loading}
+                  required={loginMethod === 'phone'}
                 />
-                <small style={{color: '#718096', fontSize: '12px', marginTop: '4px'}}>
-                  請輸入 8 位數字（無需加區號 +852）
+                <small className="input-hint">
+                  例如：9123 4567（無需加區號 +852）
                 </small>
               </div>
 
-              <div className="form-group">
-                <label htmlFor="email">電郵地址</label>
+              {/* 郵箱輸入（帶動畫） */}
+              <div 
+                className={`form-group-animated ${loginMethod === 'email' ? 'active' : ''}`}
+                style={{
+                  display: loginMethod === 'email' ? 'block' : 'none'
+                }}
+              >
+                <label htmlFor="email">
+                  <span className="label-icon">✉️</span>
+                  電郵地址
+                </label>
                 <input
                   id="email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="例如：patient@example.com"
+                  placeholder="請輸入您的電郵地址"
                   disabled={loading}
+                  required={loginMethod === 'email'}
                 />
-                <small style={{color: '#718096', fontSize: '12px', marginTop: '4px'}}>
-                  郵箱不區分大小寫
+                <small className="input-hint">
+                  郵箱不區分大小寫，例如：patient@example.com
                 </small>
               </div>
 
               {error && <div className="error-message">{error}</div>}
 
               <button type="submit" className="submit-btn" disabled={loading}>
-                {loading ? '驗證中...' : '開始訪談'}
+                {loading ? (
+                  <>
+                    <span className="spinner"></span>
+                    驗證中...
+                  </>
+                ) : (
+                  '開始訪談'
+                )}
               </button>
             </form>
 

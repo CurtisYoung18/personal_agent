@@ -260,6 +260,149 @@ body {
   cursor: not-allowed;
 }
 
+/* 登入方式切換器 */
+.login-method-switch {
+  display: flex;
+  position: relative;
+  background: #f7fafc;
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 32px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+}
+
+.method-btn {
+  flex: 1;
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 20px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #718096;
+  transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.method-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.method-btn.active {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.method-btn:not(.active):hover:not(:disabled) {
+  color: #4a5568;
+  transform: scale(1.02);
+}
+
+.method-icon {
+  font-size: 24px;
+  transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.method-btn.active .method-icon {
+  transform: scale(1.1);
+}
+
+.method-slider {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: calc(50% - 4px);
+  height: calc(100% - 8px);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 8px;
+  transition: transform 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  z-index: 1;
+}
+
+/* 表單輸入組動畫 */
+.form-group-animated {
+  animation: slideIn 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.form-group-animated label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 8px;
+}
+
+.label-icon {
+  font-size: 18px;
+}
+
+.form-group-animated input {
+  padding: 14px 16px;
+  font-size: 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  transition: all 0.2s;
+  outline: none;
+  width: 100%;
+}
+
+.form-group-animated input:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+  transform: translateY(-2px);
+}
+
+.form-group-animated input:disabled {
+  background-color: #f7fafc;
+  cursor: not-allowed;
+}
+
+.input-hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  color: #a0aec0;
+  line-height: 1.4;
+}
+
+/* 加載動畫（spinner） */
+.spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 /* ==================== 患者頁面樣式 ==================== */
 .patient-page {
   width: 100vw;
