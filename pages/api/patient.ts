@@ -1,19 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next'
-import { findPatientById } from '@/lib/db-mock'
-
-// 如果有 Vercel Postgres 环境变量，则使用真实数据库
-const USE_REAL_DB = process.env.POSTGRES_URL ? true : false
-
-// 动态导入 Vercel Postgres（仅在需要时）
-let sql: any = null
-if (USE_REAL_DB) {
-  try {
-    const postgres = require('@vercel/postgres')
-    sql = postgres.sql
-  } catch (e) {
-    console.warn('Vercel Postgres not available, using mock data')
-  }
-}
+import { sql } from '@vercel/postgres'
 
 export default async function handler(
   req: NextApiRequest,
@@ -33,29 +19,17 @@ export default async function handler(
   }
 
   try {
-    let patient: any = null
-
-    if (USE_REAL_DB && sql) {
-      try {
-        // 嘗試使用真實數據庫
-        const result = await sql`
-          SELECT id, case_number, name, email, phone, age, gender, occupation,
-                 event_location, event_date, event_summary,
-                 symptoms, onset_datetime, food_history, notes
-          FROM patients
-          WHERE id = ${id}
-          LIMIT 1
-        `
-        patient = result.rows.length > 0 ? result.rows[0] : null
-      } catch (dbError) {
-        console.warn('數據庫查詢失敗，回退到模擬數據:', dbError)
-        // 回退到模擬數據
-        patient = findPatientById(id)
-      }
-    } else {
-      // 使用模擬數據
-      patient = findPatientById(id)
-    }
+    // 使用真實數據庫查詢
+    const result = await sql`
+      SELECT id, case_number, name, email, phone, age, gender, occupation,
+             event_location, event_date, event_summary,
+             symptoms, onset_datetime, food_history, notes
+      FROM patients
+      WHERE id = ${id}
+      LIMIT 1
+    `
+    
+    const patient = result.rows.length > 0 ? result.rows[0] : null
 
     if (!patient) {
       return res.status(404).json({
@@ -68,19 +42,19 @@ export default async function handler(
       success: true,
       patient: {
         id: patient.id.toString(),
-        caseNumber: patient.case_number || patient.caseNumber,
+        caseNumber: patient.case_number,
         name: patient.name,
         email: patient.email,
         phone: patient.phone,
         age: patient.age,
         gender: patient.gender,
         occupation: patient.occupation,
-        eventLocation: patient.event_location || patient.eventLocation,
-        eventDate: patient.event_date || patient.eventDate,
-        eventSummary: patient.event_summary || patient.eventSummary,
+        eventLocation: patient.event_location,
+        eventDate: patient.event_date,
+        eventSummary: patient.event_summary,
         symptoms: patient.symptoms,
-        onsetDatetime: patient.onset_datetime || patient.onsetDatetime,
-        foodHistory: patient.food_history || patient.foodHistory,
+        onsetDatetime: patient.onset_datetime,
+        foodHistory: patient.food_history,
         notes: patient.notes,
       },
     })
