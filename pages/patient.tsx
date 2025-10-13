@@ -93,7 +93,7 @@ export default function PatientPage() {
         
         // 處理用戶屬性：年齡轉為整數並添加單位，null 值使用 "please provide"
         // 格式化案發時間為可讀格式
-        const formatCaseTime = (datetime: string | null) => {
+        const formatCaseTime = (datetime: string | null | undefined) => {
           if (!datetime) return 'please provide'
           try {
             const date = new Date(datetime)
@@ -115,7 +115,7 @@ export default function PatientPage() {
           mobile: patientInfo.phone || 'please provide',
           patient_name: patientInfo.name || 'please provide',
           sex: patientInfo.gender || 'please provide',
-          case_time: formatCaseTime(patientInfo.onsetDatetime),
+          case_time: formatCaseTime(patientInfo.onsetDatetime || null),
         }
 
         console.log('📤 準備同步的屬性:', properties)
