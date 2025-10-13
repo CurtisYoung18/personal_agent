@@ -47,50 +47,46 @@ export default function PatientPage() {
     fetchPatientInfo(id as string)
   }, [id])
 
-  // 使用 useEffect 监听 iframe 加载完成后，同步用户属性
+  // 使用 useEffect 监听 iframe 加载完成后，立即同步用户属性
   useEffect(() => {
     if (!patientInfo || !iframeUrl) return
+
+    // 立即同步用戶屬性到 GPTBots（不等待 iframe）
+    const userId = patientInfo.caseNumber || patientInfo.phone
+    console.log('📤 立即同步用戶屬性到 GPTBots...')
+    syncUserProperties(userId, patientInfo)
 
     const iframe = document.querySelector('iframe') as HTMLIFrameElement
     if (!iframe) return
 
     // 監聽 iframe 加載完成事件
     const handleIframeLoad = () => {
-      console.log('🎬 iframe 已加載完成，開始同步用戶屬性...')
+      console.log('🎬 iframe 已加載完成')
       
-      // 等待額外 2 秒確保 GPTBots 初始化完成
-      setTimeout(() => {
-        if (iframe && iframe.contentWindow) {
-          // 根據 GPTBots 用戶屬性字段構建數據
-          const userProperties = {
-            age: patientInfo.age?.toString() || '',
-            case_id: patientInfo.caseNumber || '',
-            detail: patientInfo.eventSummary || '',
-            mobile: patientInfo.phone || '',
-            patient_name: patientInfo.name || '',
-          }
-
-          // 發送用戶 ID（使用案例編號）
-          iframe.contentWindow.postMessage(
-            JSON.stringify({ 
-              type: 'UserId', 
-              data: patientInfo.caseNumber || patientInfo.phone 
-            }),
-            '*'
-          )
-
-          console.log('📤 患者資訊已傳送至 iframe:', userProperties)
-          
-          // 同步用戶屬性到 GPTBots
-          const userId = patientInfo.caseNumber || patientInfo.phone
-          syncUserProperties(userId, patientInfo)
-
-          // 再等待 1 秒後發送歡迎消息
-          setTimeout(() => {
-            sendWelcomeMessage(iframe, patientInfo.name)
-          }, 1000)
+      if (iframe && iframe.contentWindow) {
+        // 根據 GPTBots 用戶屬性字段構建數據
+        const userProperties = {
+          age: patientInfo.age?.toString() || '',
+          case_id: patientInfo.caseNumber || '',
+          detail: patientInfo.eventSummary || '',
+          mobile: patientInfo.phone || '',
+          patient_name: patientInfo.name || '',
         }
-      }, 2000)
+
+        // 發送用戶 ID（使用案例編號）
+        iframe.contentWindow.postMessage(
+          JSON.stringify({ 
+            type: 'UserId', 
+            data: patientInfo.caseNumber || patientInfo.phone 
+          }),
+          '*'
+        )
+
+        console.log('📤 用戶 ID 已傳送至 iframe:', userProperties)
+        
+        // 立即發送歡迎消息
+        sendWelcomeMessage(iframe, patientInfo.name)
+      }
     }
 
     // 如果 iframe 已經加載完成
@@ -110,6 +106,7 @@ export default function PatientPage() {
   const sendWelcomeMessage = (iframe: HTMLIFrameElement, patientName: string) => {
     try {
       if (iframe && iframe.contentWindow) {
+        console.log('👋 發送歡迎消息:', patientName)
         // 模擬用戶發送消息，觸發 Agent 回應
         iframe.contentWindow.postMessage(
           JSON.stringify({
@@ -118,7 +115,6 @@ export default function PatientPage() {
           }),
           '*'
         )
-        console.log('👋 已發送歡迎消息')
       }
     } catch (error) {
       console.warn('⚠️ 發送歡迎消息失敗:', error)
