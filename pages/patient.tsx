@@ -195,6 +195,9 @@ export default function PatientPage() {
   useEffect(() => {
     if (!showIframe || !patientInfo) return
 
+    // 捕獲當前的 patientInfo 到閉包中
+    const currentPatientInfo = patientInfo
+
     const iframe = document.querySelector('iframe') as HTMLIFrameElement
     if (!iframe) return
 
@@ -208,7 +211,7 @@ export default function PatientPage() {
           iframe.contentWindow.postMessage(
             JSON.stringify({ 
               type: 'UserId', 
-              data: patientInfo.caseNumber || patientInfo.phone 
+              data: currentPatientInfo.caseNumber || currentPatientInfo.phone 
             }),
             '*'
           )
@@ -219,11 +222,11 @@ export default function PatientPage() {
               iframe.contentWindow.postMessage(
                 JSON.stringify({
                   type: 'sendMessage',
-                  data: `你好，我是${patientInfo.name}`
+                  data: `你好，我是${currentPatientInfo.name}`
                 }),
                 '*'
               )
-              console.log('👋 已發送歡迎消息:', `你好，我是${patientInfo.name}`)
+              console.log('👋 已發送歡迎消息:', `你好，我是${currentPatientInfo.name}`)
             }
           }, 500)
         }
@@ -243,7 +246,8 @@ export default function PatientPage() {
         iframe.removeEventListener('load', handleIframeLoad)
       }
     }
-  }, [showIframe, patientInfo])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showIframe])
 
   // iframe 顯示階段（帶淡入動畫）
   return (
