@@ -211,37 +211,34 @@ export default function PatientPage() {
   // iframe 顯示階段
   return (
     <div className={`patient-page ${showIframe ? 'fade-in' : ''}`}>
-      {/* 頂部導航欄 */}
+      {/* 頂部導航欄（包含系統信息和患者信息） */}
       <header className="patient-page-header">
         <div className="header-logo">
           <img src="/logo.png" alt="香港衛生署" />
         </div>
-        <div className="header-title">
-          <h1>香港衛生署內部系統</h1>
-          <p>智能化呈報傳染病平台</p>
+        <div className="header-content">
+          <div className="header-system-info">
+            <h1>香港衛生署內部系統</h1>
+            <p>智能化呈報傳染病平台</p>
+          </div>
+          <div className="header-patient-info">
+            <span className="patient-item">
+              <strong>受訪者：</strong>{patientInfo.name}
+            </span>
+            <span className="patient-separator">|</span>
+            <span className="patient-item">
+              <strong>案件：</strong>{patientInfo.caseNumber}
+            </span>
+            <span className="patient-separator">|</span>
+            <span className="patient-item">
+              <strong>事件：</strong>{patientInfo.eventSummary}
+            </span>
+          </div>
         </div>
         <button onClick={handleLogout} className="logout-btn">
           登出
         </button>
       </header>
-
-      {/* 患者信息欄 */}
-      <div className="patient-info-bar">
-        <div className="patient-info-content">
-          <div className="info-item">
-            <span className="info-label">受訪者</span>
-            <span className="info-value">{patientInfo.name}</span>
-          </div>
-          <div className="info-item">
-            <span className="info-label">案件編號</span>
-            <span className="info-value">{patientInfo.caseNumber}</span>
-          </div>
-          <div className="info-item">
-            <span className="info-label">事件</span>
-            <span className="info-value">{patientInfo.eventSummary}</span>
-          </div>
-        </div>
-      </div>
 
       {/* iframe 容器（毛玻璃效果） */}
       <div className="patient-content-wrapper">

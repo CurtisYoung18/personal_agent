@@ -270,48 +270,78 @@ body {
   flex-direction: column;
 }
 
-/* 頂部導航欄 */
+/* 頂部導航欄（緊湊設計） */
 .patient-page-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 24px;
+  padding: 10px 24px;
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
   flex-shrink: 0;
-  gap: 16px;
+  gap: 20px;
 }
 
 .patient-page-header .header-logo img {
-  width: 50px;
-  height: 50px;
+  width: 45px;
+  height: 45px;
   object-fit: cover;
   border-radius: 50%;
+  flex-shrink: 0;
 }
 
-.patient-page-header .header-title {
+.patient-page-header .header-content {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
-.patient-page-header .header-title h1 {
+.patient-page-header .header-system-info {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.patient-page-header .header-system-info h1 {
   margin: 0;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
   color: white;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
-.patient-page-header .header-title p {
-  margin: 2px 0 0 0;
+.patient-page-header .header-system-info p {
+  margin: 0;
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.75);
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+}
+
+.patient-page-header .header-patient-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.patient-page-header .patient-item {
+  white-space: nowrap;
+}
+
+.patient-page-header .patient-item strong {
+  font-weight: 600;
+  margin-right: 4px;
+}
+
+.patient-page-header .patient-separator {
+  color: rgba(255, 255, 255, 0.4);
+  font-weight: 300;
 }
 
 .patient-page-header .logout-btn {
@@ -325,6 +355,7 @@ body {
   font-weight: 600;
   transition: all 0.2s;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .patient-page-header .logout-btn:hover {
@@ -332,48 +363,12 @@ body {
   transform: translateY(-1px);
 }
 
-/* 患者信息欄 */
-.patient-info-bar {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  padding: 12px 24px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  flex-shrink: 0;
-}
-
-.patient-info-content {
-  display: flex;
-  gap: 24px;
-  flex-wrap: wrap;
-  align-items: center;
-}
-
-.info-item {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.info-label {
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.7);
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.info-value {
-  font-size: 14px;
-  color: white;
-  font-weight: 600;
-}
-
-/* iframe 容器 */
+/* iframe 容器（增加 padding） */
 .patient-content-wrapper {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 20px;
+  padding: 32px;
   overflow: hidden;
 }
 
@@ -1027,42 +1022,40 @@ body {
 
   /* 患者頁面響應式 */
   .patient-page-header {
-    padding: 10px 16px;
-    gap: 12px;
+    padding: 8px 12px;
+    gap: 10px;
+    flex-wrap: wrap;
   }
 
   .patient-page-header .header-logo img {
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
   }
 
-  .patient-page-header .header-title h1 {
-    font-size: 14px;
+  .patient-page-header .header-content {
+    gap: 4px;
   }
 
-  .patient-page-header .header-title p {
+  .patient-page-header .header-system-info {
+    gap: 8px;
+  }
+
+  .patient-page-header .header-system-info h1 {
+    font-size: 13px;
+  }
+
+  .patient-page-header .header-system-info p {
     font-size: 10px;
+  }
+
+  .patient-page-header .header-patient-info {
+    font-size: 11px;
+    gap: 8px;
   }
 
   .patient-page-header .logout-btn {
     padding: 6px 12px;
-    font-size: 12px;
-  }
-
-  .patient-info-bar {
-    padding: 10px 16px;
-  }
-
-  .patient-info-content {
-    gap: 16px;
-  }
-
-  .info-label {
-    font-size: 10px;
-  }
-
-  .info-value {
-    font-size: 13px;
+    font-size: 11px;
   }
 
   .patient-content-wrapper {
