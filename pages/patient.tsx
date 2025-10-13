@@ -221,14 +221,16 @@ export default function PatientPage() {
           
           // 再等待 0.5 秒後發送歡迎消息
           setTimeout(() => {
-            iframe.contentWindow?.postMessage(
-              JSON.stringify({
-                type: 'sendMessage',
-                data: `你好，我是${patientInfo.name}`
-              }),
-              '*'
-            )
-            console.log('👋 已發送歡迎消息:', `你好，我是${patientInfo.name}`)
+            if (iframe && iframe.contentWindow) {
+              iframe.contentWindow.postMessage(
+                JSON.stringify({
+                  type: 'sendMessage',
+                  data: `你好，我是${patientInfo.name}`
+                }),
+                '*'
+              )
+              console.log('👋 已發送歡迎消息:', `你好，我是${patientInfo.name}`)
+            }
           }, 500)
         }
       }, 1000)
@@ -243,7 +245,9 @@ export default function PatientPage() {
     }
 
     return () => {
-      iframe.removeEventListener('load', handleIframeLoad)
+      if (iframe) {
+        iframe.removeEventListener('load', handleIframeLoad)
+      }
     }
   }, [showIframe, patientInfo])
 
