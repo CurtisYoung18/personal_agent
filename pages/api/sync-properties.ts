@@ -45,19 +45,18 @@ export default async function handler(
     // 調用 GPTBots 用戶屬性 API
     const gptbotsUrl = `https://api-${endpoint}.gptbots.ai/v1/property/update`
 
-    // 構建屬性列表
-    const propertyValues = Object.entries(properties)
-      .filter(([_, value]) => value) // 過濾空值
-      .map(([key, value]) => ({
-        property_name: key,
-        value: value,
-      }))
+    // 構建屬性列表（不過濾任何值，包括 "please provide"）
+    const propertyValues = Object.entries(properties).map(([key, value]) => ({
+      property_name: key,
+      value: String(value || ''), // 確保所有值都是字符串，null/undefined 轉為空字符串
+    }))
 
     console.log('📤 正在同步到 GPTBots:', {
       url: gptbotsUrl,
       userId,
       properties: propertyValues,
     })
+    console.log('📋 原始屬性:', properties)
 
     const response = await fetch(gptbotsUrl, {
       method: 'POST',
@@ -75,6 +74,7 @@ export default async function handler(
 
     if (response.ok) {
       console.log('✅ GPTBots 用戶屬性同步成功!')
+      console.log('📥 GPTBots 響應:', JSON.stringify(data, null, 2))
 
       return res.status(200).json({
         success: true,
@@ -83,7 +83,8 @@ export default async function handler(
         gptbotsResponse: data,
       })
     } else {
-      console.error('❌ GPTBots API 返回錯誤:', data)
+      console.error('❌ GPTBots API 返回錯誤:', JSON.stringify(data, null, 2))
+      console.error('❌ HTTP 狀態碼:', response.status)
 
       return res.status(response.status).json({
         success: false,
