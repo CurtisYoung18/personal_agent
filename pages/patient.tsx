@@ -90,12 +90,13 @@ export default function PatientPage() {
         const userId = patientInfo.caseNumber || patientInfo.phone
         console.log('📤 同步用戶屬性到 GPTBots...')
         
+        // 處理用戶屬性：年齡轉為整數，null 值使用 "please provide"
         const properties = {
-          age: patientInfo.age?.toString() || '',
-          case_id: patientInfo.caseNumber || '',
-          detail: patientInfo.eventSummary || '',
-          mobile: patientInfo.phone || '',
-          patient_name: patientInfo.name || '',
+          age: patientInfo.age ? Math.floor(patientInfo.age).toString() : 'please provide',
+          case_id: patientInfo.caseNumber || 'please provide',
+          detail: patientInfo.eventSummary || 'please provide',
+          mobile: patientInfo.phone || 'please provide',
+          patient_name: patientInfo.name || 'please provide',
         }
 
         await fetch('/api/sync-properties', {
