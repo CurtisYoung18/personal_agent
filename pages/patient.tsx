@@ -90,9 +90,9 @@ export default function PatientPage() {
         const userId = patientInfo.caseNumber || patientInfo.phone
         console.log('📤 同步用戶屬性到 GPTBots...')
         
-        // 處理用戶屬性：年齡轉為整數，null 值使用 "please provide"
+        // 處理用戶屬性：年齡轉為整數並添加單位，null 值使用 "please provide"
         const properties = {
-          age: patientInfo.age ? Math.floor(patientInfo.age).toString() : 'please provide',
+          age: patientInfo.age ? `${Math.floor(patientInfo.age)}歲` : 'please provide',
           case_id: patientInfo.caseNumber || 'please provide',
           detail: patientInfo.eventSummary || 'please provide',
           mobile: patientInfo.phone || 'please provide',
