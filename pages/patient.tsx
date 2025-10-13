@@ -51,38 +51,79 @@ export default function PatientPage() {
   useEffect(() => {
     if (!patientInfo || !iframeUrl) return
 
-    // 延迟同步，确保 iframe 已完全加载
-    const timer = setTimeout(() => {
-      const iframe = document.querySelector('iframe')
-      if (iframe && iframe.contentWindow) {
-        // 根據 GPTBots 用戶屬性字段構建數據
-        const userProperties = {
-          age: patientInfo.age?.toString() || '',
-          case_id: patientInfo.caseNumber || '',
-          detail: patientInfo.eventSummary || '',
-          mobile: patientInfo.phone || '',
-          patient_name: patientInfo.name || '',
-        }
+    const iframe = document.querySelector('iframe') as HTMLIFrameElement
+    if (!iframe) return
 
-        // 發送用戶 ID（使用案例編號）
+    // 監聽 iframe 加載完成事件
+    const handleIframeLoad = () => {
+      console.log('🎬 iframe 已加載完成，開始同步用戶屬性...')
+      
+      // 等待額外 2 秒確保 GPTBots 初始化完成
+      setTimeout(() => {
+        if (iframe && iframe.contentWindow) {
+          // 根據 GPTBots 用戶屬性字段構建數據
+          const userProperties = {
+            age: patientInfo.age?.toString() || '',
+            case_id: patientInfo.caseNumber || '',
+            detail: patientInfo.eventSummary || '',
+            mobile: patientInfo.phone || '',
+            patient_name: patientInfo.name || '',
+          }
+
+          // 發送用戶 ID（使用案例編號）
+          iframe.contentWindow.postMessage(
+            JSON.stringify({ 
+              type: 'UserId', 
+              data: patientInfo.caseNumber || patientInfo.phone 
+            }),
+            '*'
+          )
+
+          console.log('📤 患者資訊已傳送至 iframe:', userProperties)
+          
+          // 同步用戶屬性到 GPTBots
+          const userId = patientInfo.caseNumber || patientInfo.phone
+          syncUserProperties(userId, patientInfo)
+
+          // 再等待 1 秒後發送歡迎消息
+          setTimeout(() => {
+            sendWelcomeMessage(iframe, patientInfo.name)
+          }, 1000)
+        }
+      }, 2000)
+    }
+
+    // 如果 iframe 已經加載完成
+    if (iframe.contentDocument?.readyState === 'complete') {
+      handleIframeLoad()
+    } else {
+      // 否則監聽 load 事件
+      iframe.addEventListener('load', handleIframeLoad)
+    }
+
+    return () => {
+      iframe.removeEventListener('load', handleIframeLoad)
+    }
+  }, [patientInfo, iframeUrl])
+
+  // 發送歡迎消息
+  const sendWelcomeMessage = (iframe: HTMLIFrameElement, patientName: string) => {
+    try {
+      if (iframe && iframe.contentWindow) {
+        // 模擬用戶發送消息，觸發 Agent 回應
         iframe.contentWindow.postMessage(
-          JSON.stringify({ 
-            type: 'UserId', 
-            data: patientInfo.caseNumber || patientInfo.phone 
+          JSON.stringify({
+            type: 'sendMessage',
+            data: `你好，我是${patientName}`
           }),
           '*'
         )
-
-        console.log('📤 患者資訊已傳送至 iframe:', userProperties)
-        
-        // 立即同步用戶屬性到 GPTBots
-        const userId = patientInfo.caseNumber || patientInfo.phone
-        syncUserProperties(userId, patientInfo)
+        console.log('👋 已發送歡迎消息')
       }
-    }, 1500)
-
-    return () => clearTimeout(timer)
-  }, [patientInfo, iframeUrl])
+    } catch (error) {
+      console.warn('⚠️ 發送歡迎消息失敗:', error)
+    }
+  }
 
   // 同步用戶屬性到 GPTBots（可選）
   const syncUserProperties = async (userId: string, patient: any) => {
