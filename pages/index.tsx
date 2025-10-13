@@ -31,7 +31,7 @@ export default function LoginPage() {
         // 驗證成功，跳轉到患者頁面（會顯示過渡動畫並創建對話）
         router.push(`/patient?id=${data.patientId}`)
       } else {
-        setError(data.message || '驗證失敗，請檢查您的電郵和電話')
+        setError(data.message || '驗證失敗，請檢查您的電話號碼或電郵地址')
       }
     } catch (err) {
       setError('網絡錯誤，請稍後重試')
@@ -80,19 +80,18 @@ export default function LoginPage() {
 
             <div className="login-header">
               <h2>患者身份驗證</h2>
-              <p>請輸入您的電話號碼以繼續訪談</p>
+              <p>請使用電話號碼或電郵地址登入</p>
             </div>
 
             <form onSubmit={handleSubmit} className="login-form">
               <div className="form-group">
-                <label htmlFor="phone">電話號碼 *</label>
+                <label htmlFor="phone">電話號碼</label>
                 <input
                   id="phone"
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="例如：9123 4567"
-                  required
                   disabled={loading}
                 />
                 <small style={{color: '#718096', fontSize: '12px', marginTop: '4px'}}>
@@ -101,7 +100,7 @@ export default function LoginPage() {
               </div>
 
               <div className="form-group">
-                <label htmlFor="email">電郵地址（可選）</label>
+                <label htmlFor="email">電郵地址</label>
                 <input
                   id="email"
                   type="email"
@@ -110,6 +109,9 @@ export default function LoginPage() {
                   placeholder="例如：patient@example.com"
                   disabled={loading}
                 />
+                <small style={{color: '#718096', fontSize: '12px', marginTop: '4px'}}>
+                  郵箱不區分大小寫
+                </small>
               </div>
 
               {error && <div className="error-message">{error}</div>}

@@ -11,25 +11,36 @@ export default async function handler(
 
   const { email, phone } = req.body
 
-  if (!phone) {
+  // 至少需要提供手機號碼或郵箱其中之一
+  if (!phone && !email) {
     return res.status(400).json({
       success: false,
-      message: '請提供電話號碼',
+      message: '請提供電話號碼或電郵地址',
     })
   }
 
   try {
     let patient: any = null
 
-    // 使用真實數據庫查詢
-    if (email) {
+    // 使用真實數據庫查詢（郵箱不區分大小寫）
+    if (email && phone) {
+      // 如果同時提供了郵箱和手機號，兩者都要匹配
       const result = await sql`
         SELECT id FROM patients
-        WHERE (email = ${email} OR phone = ${phone})
+        WHERE LOWER(email) = LOWER(${email}) AND phone = ${phone}
+        LIMIT 1
+      `
+      patient = result.rows.length > 0 ? result.rows[0] : null
+    } else if (email) {
+      // 僅提供郵箱（不區分大小寫）
+      const result = await sql`
+        SELECT id FROM patients
+        WHERE LOWER(email) = LOWER(${email})
         LIMIT 1
       `
       patient = result.rows.length > 0 ? result.rows[0] : null
     } else {
+      // 僅提供手機號
       const result = await sql`
         SELECT id FROM patients
         WHERE phone = ${phone}
