@@ -19,32 +19,16 @@ interface PatientInfo {
   notes?: string | null
 }
 
-interface Message {
-  role: 'user' | 'assistant'
-  content: string
-  timestamp: number
-}
-
 export default function PatientPage() {
   const router = useRouter()
   const { id } = router.query
   const [patientInfo, setPatientInfo] = useState<PatientInfo | null>(null)
+  const [iframeUrl, setIframeUrl] = useState('')
   const [loading, setLoading] = useState(true)
-  const [messages, setMessages] = useState<Message[]>([])
-  const [inputMessage, setInputMessage] = useState('')
-  const [isSending, setIsSending] = useState(false)
-  const [conversationId, setConversationId] = useState<string | null>(null)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const [isInitializing, setIsInitializing] = useState(false)
+  const [showIframe, setShowIframe] = useState(false)
+  const [initMessage, setInitMessage] = useState('')
   const hasInitialized = useRef(false)
-
-  // 滾動到底部
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }
-
-  useEffect(() => {
-    scrollToBottom()
-  }, [messages])
 
   // Effect 1: 加載患者信息
   useEffect(() => {
@@ -60,6 +44,23 @@ export default function PatientPage() {
 
         if (response.ok && data.success) {
           setPatientInfo(data.patient)
+          
+          const baseUrl = 'https://www.gptbots.ai/widget/eek1z5tclbpvaoak5609epw/chat.html'
+          const userId = data.patient.caseNumber || data.patient.phone
+          const userEmail = data.patient.email || ''
+          
+          const params = new URLSearchParams({
+            user_id: userId,
+          })
+          
+          if (userEmail) {
+            params.set('email', userEmail)
+          }
+          
+          const fullUrl = `${baseUrl}?${params.toString()}`
+          
+          console.log('🔗 iframe URL:', fullUrl)
+          setIframeUrl(fullUrl)
         } else {
           router.push('/')
         }
@@ -75,18 +76,20 @@ export default function PatientPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
 
-  // Effect 2: 初始化對話
+  // Effect 2: 同步用戶屬性並顯示 iframe
   useEffect(() => {
-    if (!patientInfo || hasInitialized.current) return
+    if (!patientInfo || !iframeUrl || hasInitialized.current) return
 
     hasInitialized.current = true
 
     const initializeConversation = async () => {
+      setIsInitializing(true)
+      setInitMessage(`${patientInfo.name}，您好`)
+
       try {
         const userId = patientInfo.caseNumber || patientInfo.phone
-        console.log('📤 初始化對話...')
-
-        // Step 1: 同步用戶屬性
+        console.log('📤 同步用戶屬性到 GPTBots...')
+        
         const properties = {
           age: patientInfo.age?.toString() || '',
           case_id: patientInfo.caseNumber || '',
@@ -100,118 +103,70 @@ export default function PatientPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userId, properties }),
         })
-
-        // Step 2: 創建對話
-        const createResponse = await fetch('/api/conversation/create', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId }),
-        })
-
-        const createData = await createResponse.json()
-        if (createData.success && createData.conversation_id) {
-          setConversationId(createData.conversation_id)
-          console.log('✅ 對話已創建:', createData.conversation_id)
-
-          // Step 3: 發送歡迎消息
-          await sendMessage(`你好，我是${patientInfo.name}`, createData.conversation_id, true)
-        }
+        
+        console.log('✅ 用戶屬性已同步')
+        setInitMessage(`正在為 ${patientInfo.name} 準備問卷...`)
+        
+        // 直接顯示 iframe，對話將在 iframe 內開始
+        setTimeout(() => {
+          setShowIframe(true)
+          setIsInitializing(false)
+        }, 800)
       } catch (error) {
-        console.error('❌ 初始化失敗:', error)
+        console.error('❌ 同步失敗:', error)
+        setInitMessage('正在進入問卷...')
+        
+        // 即使同步失敗也顯示 iframe
+        setTimeout(() => {
+          setShowIframe(true)
+          setIsInitializing(false)
+        }, 1000)
       }
     }
 
     initializeConversation()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [patientInfo])
+  }, [patientInfo, iframeUrl])
 
-  // 發送消息
-  const sendMessage = async (message: string, convId?: string, isWelcome = false) => {
-    const targetConvId = convId || conversationId
-    if (!targetConvId || !patientInfo) return
+  // Effect 3: iframe 加載後設置用戶 ID
+  useEffect(() => {
+    if (!showIframe || !patientInfo) return
 
-    // 添加用戶消息
-    if (!isWelcome) {
-      const userMessage: Message = {
-        role: 'user',
-        content: message,
-        timestamp: Date.now(),
-      }
-      setMessages(prev => [...prev, userMessage])
-      setInputMessage('')
-    }
+    const currentPatientInfo = patientInfo
+    const iframe = document.querySelector('iframe') as HTMLIFrameElement
+    if (!iframe) return
 
-    setIsSending(true)
-
-    try {
-      const response = await fetch('/api/conversation/message', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          conversationId: targetConvId,
-          message: message,
-        }),
-      })
-
-      const reader = response.body?.getReader()
-      const decoder = new TextDecoder()
-
-      if (!reader) throw new Error('No reader')
-
-      let aiMessage = ''
-      let currentMessage: Message = {
-        role: 'assistant',
-        content: '',
-        timestamp: Date.now(),
-      }
-
-      // 添加一個空的 AI 消息用於流式更新
-      setMessages(prev => [...prev, currentMessage])
-
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-
-        const chunk = decoder.decode(value)
-        const lines = chunk.split('\n')
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6)
-            if (data === '[DONE]') continue
-
-            try {
-              const parsed = JSON.parse(data)
-              if (parsed.content) {
-                aiMessage += parsed.content
-                // 更新最後一條消息
-                setMessages(prev => {
-                  const newMessages = [...prev]
-                  newMessages[newMessages.length - 1] = {
-                    ...currentMessage,
-                    content: aiMessage,
-                  }
-                  return newMessages
-                })
-              }
-            } catch (e) {
-              // 忽略解析錯誤
-            }
-          }
+    const handleIframeLoad = () => {
+      console.log('🎬 iframe 已加載')
+      
+      setTimeout(() => {
+        if (iframe && iframe.contentWindow) {
+          // 只發送用戶 ID，歡迎消息由 Agent 自動顯示
+          iframe.contentWindow.postMessage(
+            JSON.stringify({ 
+              type: 'UserId', 
+              data: currentPatientInfo.caseNumber || currentPatientInfo.phone 
+            }),
+            '*'
+          )
+          console.log('✅ 用戶 ID 已傳送至 iframe')
         }
-      }
-    } catch (error) {
-      console.error('❌ 發送消息失敗:', error)
-    } finally {
-      setIsSending(false)
+      }, 1000)
     }
-  }
 
-  // 處理發送
-  const handleSend = () => {
-    if (!inputMessage.trim() || isSending) return
-    sendMessage(inputMessage.trim())
-  }
+    if (iframe.contentDocument?.readyState === 'complete') {
+      handleIframeLoad()
+    } else {
+      iframe.addEventListener('load', handleIframeLoad)
+    }
+
+    return () => {
+      if (iframe) {
+        iframe.removeEventListener('load', handleIframeLoad)
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showIframe])
 
   // 處理登出
   const handleLogout = () => {
@@ -234,99 +189,45 @@ export default function PatientPage() {
     return null
   }
 
+  // 初始化階段
+  if (isInitializing || !showIframe) {
+    return (
+      <div className="initializing-container">
+        <div className="init-card">
+          <div className="init-logo">
+            <img src="/logo.png" alt="香港衛生署" />
+          </div>
+          <div className="init-content">
+            <div className="init-spinner"></div>
+            <h2>{initMessage}</h2>
+            <p className="init-hint">系統正在為您準備個性化訪談體驗</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // iframe 顯示階段
   return (
-    <div className="chat-container">
-      {/* 頂部信息卡片 */}
-      <div className="chat-header">
-        <div className="header-card">
-          <div className="header-gradient">
-            <div className="header-content">
-              <div className="logo-circle">
-                <img src="/logo.png" alt="香港衞生署" />
-              </div>
-              <h1>香港衞生署</h1>
-              <p className="subtitle">智能化呈報傳染病平台</p>
-              <p className="subtitle-en">Smart Disease Reporting Platform</p>
-            </div>
-          </div>
-
-          <div className="info-section">
-            <div className="alert-card">
-              <div className="alert-icon">⚠️</div>
-              <h4>緊急食物中毒事件調查</h4>
-              <div className="alert-content">
-                <div className="event-info">
-                  <span>🏨</span>
-                  <span>{patientInfo.eventSummary}</span>
-                </div>
-                <div className="patient-info">
-                  <span>👤</span>
-                  <span>當前調查對象：{patientInfo.name}</span>
-                </div>
-              </div>
-            </div>
-
-            <button onClick={handleLogout} className="logout-btn">
-              登出
-            </button>
-          </div>
+    <div className={`patient-container ${showIframe ? 'fade-in' : ''}`}>
+      <div className="patient-header">
+        <div className="patient-info">
+          <span className="patient-name">{patientInfo.name}</span>
+          <span className="case-number">{patientInfo.caseNumber}</span>
+          <span className="event-info">{patientInfo.eventSummary}</span>
         </div>
+        <button onClick={handleLogout} className="logout-btn-small">
+          登出
+        </button>
       </div>
 
-      {/* 對話區域 */}
-      <div className="messages-container">
-        {messages.map((msg, idx) => (
-          <div key={idx} className={`message ${msg.role}`}>
-            <div className="message-avatar">
-              {msg.role === 'assistant' ? '🤖' : '👤'}
-            </div>
-            <div className="message-bubble">
-              <div className="message-content">{msg.content}</div>
-              <div className="message-time">
-                {new Date(msg.timestamp).toLocaleTimeString('zh-HK', {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
-              </div>
-            </div>
-          </div>
-        ))}
-        {isSending && (
-          <div className="message assistant">
-            <div className="message-avatar">🤖</div>
-            <div className="message-bubble">
-              <div className="typing-indicator">
-                <span></span>
-                <span></span>
-                <span></span>
-              </div>
-            </div>
-          </div>
-        )}
-        <div ref={messagesEndRef} />
-      </div>
-
-      {/* 輸入區域 */}
-      <div className="input-container">
-        <div className="input-wrapper">
-          <input
-            type="text"
-            value={inputMessage}
-            onChange={(e) => setInputMessage(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-            placeholder="輸入您的回答..."
-            disabled={isSending}
-            className="message-input"
-          />
-          <button
-            onClick={handleSend}
-            disabled={!inputMessage.trim() || isSending}
-            className="send-btn"
-          >
-            <i className="ri-send-plane-fill"></i>
-          </button>
-        </div>
-      </div>
+      <iframe
+        src={iframeUrl || 'about:blank'}
+        className="patient-iframe"
+        title="Patient Interview Agent"
+        allow="microphone *"
+        sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-modals"
+      />
     </div>
   )
 }
