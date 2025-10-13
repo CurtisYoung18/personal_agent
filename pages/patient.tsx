@@ -31,18 +31,7 @@ export default function PatientPage() {
 
   useEffect(() => {
     if (!id) {
-      // 檢查是否有記住的會話
-      const rememberedPatient = localStorage.getItem('hp_patient_session')
-      if (rememberedPatient) {
-        try {
-          const patientData = JSON.parse(rememberedPatient)
-          router.push(`/patient?id=${patientData.id}`)
-        } catch (e) {
-          router.push('/')
-        }
-      } else {
-        router.push('/')
-      }
+      router.push('/')
       return
     }
 
@@ -202,8 +191,7 @@ export default function PatientPage() {
 
   // 處理登出
   const handleLogout = () => {
-    if (confirm('確定要登出嗎？這將清除您的登入狀態。')) {
-      localStorage.removeItem('hp_patient_session')
+    if (confirm('確定要登出嗎？')) {
       router.push('/')
     }
   }
@@ -228,7 +216,7 @@ export default function PatientPage() {
       <div className="initializing-container">
         <div className="init-card">
           <div className="init-logo">
-            <img src="/卫生署logo.png" alt="香港衛生署" />
+            <img src="/logo.png" alt="香港衛生署" />
           </div>
           <div className="init-content">
             <div className="init-spinner"></div>

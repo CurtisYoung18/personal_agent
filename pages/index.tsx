@@ -9,20 +9,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [showLoginForm, setShowLoginForm] = useState(false)
 
-  // 檢查是否已有記住的用戶
-  useEffect(() => {
-    const rememberedPatient = localStorage.getItem('hp_patient_session')
-    if (rememberedPatient) {
-      try {
-        const patientData = JSON.parse(rememberedPatient)
-        // 自動跳轉到患者頁面
-        router.push(`/patient?id=${patientData.id}`)
-      } catch (e) {
-        // 如果解析失敗，清除無效數據
-        localStorage.removeItem('hp_patient_session')
-      }
-    }
-  }, [])
+  // 移除自動登錄功能，每次都需要重新輸入密碼
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -41,13 +28,7 @@ export default function LoginPage() {
       const data = await response.json()
 
       if (response.ok && data.success) {
-        // 儲存患者會話到 localStorage（記住用戶）
-        localStorage.setItem('hp_patient_session', JSON.stringify({
-          id: data.patientId,
-          loginTime: new Date().toISOString(),
-        }))
-        
-        // 驗證成功，跳轉到 iframe 頁面，並傳遞患者 ID
+        // 驗證成功，跳轉到患者頁面（會顯示過渡動畫並創建對話）
         router.push(`/patient?id=${data.patientId}`)
       } else {
         setError(data.message || '驗證失敗，請檢查您的電郵和電話')
