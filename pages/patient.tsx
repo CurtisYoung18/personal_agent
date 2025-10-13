@@ -25,6 +25,9 @@ export default function PatientPage() {
   const [patientInfo, setPatientInfo] = useState<PatientInfo | null>(null)
   const [iframeUrl, setIframeUrl] = useState('')
   const [loading, setLoading] = useState(true)
+  const [isInitializing, setIsInitializing] = useState(false)
+  const [showIframe, setShowIframe] = useState(false)
+  const [initMessage, setInitMessage] = useState('')
 
   useEffect(() => {
     if (!id) {
@@ -47,81 +50,77 @@ export default function PatientPage() {
     fetchPatientInfo(id as string)
   }, [id])
 
-  // 使用 useEffect 监听 iframe 加载完成后，立即同步用户属性
+  // 當獲取到患者信息後，初始化對話
   useEffect(() => {
-    if (!patientInfo || !iframeUrl) return
+    if (!patientInfo || !iframeUrl || isInitializing || showIframe) return
 
-    // 立即同步用戶屬性到 GPTBots（不等待 iframe）
-    const userId = patientInfo.caseNumber || patientInfo.phone
-    console.log('📤 立即同步用戶屬性到 GPTBots...')
-    syncUserProperties(userId, patientInfo)
-
-    const iframe = document.querySelector('iframe') as HTMLIFrameElement
-    if (!iframe) return
-
-    // 監聽 iframe 加載完成事件
-    const handleIframeLoad = () => {
-      console.log('🎬 iframe 已加載完成')
-      
-      if (iframe && iframe.contentWindow) {
-        // 根據 GPTBots 用戶屬性字段構建數據
-        const userProperties = {
-          age: patientInfo.age?.toString() || '',
-          case_id: patientInfo.caseNumber || '',
-          detail: patientInfo.eventSummary || '',
-          mobile: patientInfo.phone || '',
-          patient_name: patientInfo.name || '',
-        }
-
-        // 發送用戶 ID（使用案例編號）
-        iframe.contentWindow.postMessage(
-          JSON.stringify({ 
-            type: 'UserId', 
-            data: patientInfo.caseNumber || patientInfo.phone 
-          }),
-          '*'
-        )
-
-        console.log('📤 用戶 ID 已傳送至 iframe:', userProperties)
-        
-        // 立即發送歡迎消息
-        sendWelcomeMessage(iframe, patientInfo.name)
-      }
-    }
-
-    // 如果 iframe 已經加載完成
-    if (iframe.contentDocument?.readyState === 'complete') {
-      handleIframeLoad()
-    } else {
-      // 否則監聽 load 事件
-      iframe.addEventListener('load', handleIframeLoad)
-    }
-
-    return () => {
-      iframe.removeEventListener('load', handleIframeLoad)
-    }
+    // 開始初始化流程
+    initializeConversation()
   }, [patientInfo, iframeUrl])
 
-  // 發送歡迎消息
-  const sendWelcomeMessage = (iframe: HTMLIFrameElement, patientName: string) => {
+  // 初始化對話：創建會話 → 同步屬性 → 發送歡迎消息 → 等待回復 → 顯示 iframe
+  const initializeConversation = async () => {
+    setIsInitializing(true)
+    setInitMessage('正在建立連接...')
+
     try {
-      if (iframe && iframe.contentWindow) {
-        console.log('👋 發送歡迎消息:', patientName)
-        // 模擬用戶發送消息，觸發 Agent 回應
-        iframe.contentWindow.postMessage(
-          JSON.stringify({
-            type: 'sendMessage',
-            data: `你好，我是${patientName}`
-          }),
-          '*'
-        )
+      // Step 1: 同步用戶屬性到 GPTBots
+      const userId = patientInfo!.caseNumber || patientInfo!.phone
+      console.log('📤 步驟 1: 同步用戶屬性...')
+      await syncUserProperties(userId, patientInfo!)
+      
+      setInitMessage(`您好 ${patientInfo!.name}，正在為您準備訪談...`)
+      
+      // Step 2: 通過 API 發送歡迎消息並等待回复
+      console.log('📤 步驟 2: 發送歡迎消息...')
+      const aiResponse = await sendMessageViaAPI(userId, `你好，我是${patientInfo!.name}`)
+      
+      if (aiResponse) {
+        console.log('✅ AI 已回复:', aiResponse)
+        setInitMessage('準備完成，正在進入訪談...')
+        
+        // Step 3: 短暫顯示成功消息後，顯示 iframe
+        setTimeout(() => {
+          setShowIframe(true)
+          setIsInitializing(false)
+        }, 800)
+      } else {
+        throw new Error('AI 未能正常回复')
       }
     } catch (error) {
-      console.warn('⚠️ 發送歡迎消息失敗:', error)
+      console.error('❌ 初始化對話失敗:', error)
+      setInitMessage('連接失敗，正在重試...')
+      
+      // 3秒後重試或直接顯示 iframe
+      setTimeout(() => {
+        setShowIframe(true)
+        setIsInitializing(false)
+      }, 3000)
     }
   }
 
-  // 同步用戶屬性到 GPTBots（可選）
+  // 通過 Conversation API 發送消息並等待回复
+  const sendMessageViaAPI = async (userId: string, message: string): Promise<string | null> => {
+    try {
+      const response = await fetch('/api/conversation/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, message }),
+      })
+
+      const data = await response.json()
+      
+      if (data.success && data.response) {
+        return data.response
+      }
+      return null
+    } catch (error) {
+      console.error('⚠️ 發送消息失敗:', error)
+      return null
+    }
+  }
+
+  // 同步用戶屬性到 GPTBots
   const syncUserProperties = async (userId: string, patient: any) => {
     try {
       const properties = {
@@ -143,10 +142,10 @@ export default function PatientPage() {
       if (data.synced) {
         console.log('✅ 用戶屬性已同步到 GPTBots')
       } else {
-        console.log('ℹ️ 本地模式 - 請使用 Tools 方案')
+        console.log('ℹ️ 本地模式')
       }
     } catch (error) {
-      console.warn('⚠️ 屬性同步失敗（不影響使用）:', error)
+      console.warn('⚠️ 屬性同步失敗:', error)
     }
   }
 
@@ -201,6 +200,15 @@ export default function PatientPage() {
     }
   }
 
+  // 處理登出
+  const handleLogout = () => {
+    if (confirm('確定要登出嗎？這將清除您的登入狀態。')) {
+      localStorage.removeItem('hp_patient_session')
+      router.push('/')
+    }
+  }
+
+  // 載入階段
   if (loading) {
     return (
       <div className="loading-container">
@@ -214,16 +222,27 @@ export default function PatientPage() {
     return null
   }
 
-  // 處理登出
-  const handleLogout = () => {
-    if (confirm('確定要登出嗎？這將清除您的登入狀態。')) {
-      localStorage.removeItem('hp_patient_session')
-      router.push('/')
-    }
+  // 初始化階段（發送消息並等待回复）
+  if (isInitializing || !showIframe) {
+    return (
+      <div className="initializing-container">
+        <div className="init-card">
+          <div className="init-logo">
+            <img src="/卫生署logo.png" alt="香港衛生署" />
+          </div>
+          <div className="init-content">
+            <div className="init-spinner"></div>
+            <h2>{initMessage}</h2>
+            <p className="init-hint">系統正在為您準備個性化訪談體驗</p>
+          </div>
+        </div>
+      </div>
+    )
   }
 
+  // iframe 顯示階段（帶淡入動畫）
   return (
-    <div className="patient-container">
+    <div className={`patient-container ${showIframe ? 'fade-in' : ''}`}>
       {/* 頂部狀態欄 */}
       <div className="patient-header">
         <div className="patient-info">

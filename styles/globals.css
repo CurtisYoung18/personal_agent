@@ -1012,4 +1012,141 @@ body {
   .count-badge {
     font-size: 12px;
   }
+
+  .init-card {
+    padding: 32px 24px;
+  }
+
+  .init-logo img {
+    width: 80px;
+    height: 80px;
+  }
+
+  .init-content h2 {
+    font-size: 18px;
+  }
+
+  .init-hint {
+    font-size: 13px;
+  }
+}
+
+/* ==================== 初始化頁面樣式 ==================== */
+.initializing-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+}
+
+.init-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 24px;
+  padding: 48px 40px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  max-width: 480px;
+  width: 100%;
+  animation: slideUp 0.6s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.init-logo {
+  margin-bottom: 32px;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.init-logo img {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.init-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.init-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #f3f4f6;
+  border-top: 4px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.init-content h2 {
+  font-size: 22px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+  animation: fadeIn 0.8s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.init-hint {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* ==================== iframe 淡入動畫 ==================== */
+.patient-container {
+  opacity: 0;
+  animation: fadeInContainer 1s ease-out forwards;
+}
+
+.patient-container.fade-in {
+  opacity: 1;
+}
+
+@keyframes fadeInContainer {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
