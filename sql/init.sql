@@ -71,12 +71,12 @@ INSERT INTO patients (
 );
 
 -- 案例2-6: 同席用餐者（待訪談）
-INSERT INTO patients (case_number, name, phone, email, event_location, event_date, event_summary) VALUES
-  ('20251010-002', 'Lam Lok', '97684471', NULL, '旺角彌敦道520號CDB Plaza 30樓The Seafood House', '2025-10-08', 'The Seafood House 10月8日晚宴'),
-  ('20251010-003', 'Pretty', '1', 'Dm_hito@dh.gov.hk', '旺角彌敦道520號CDB Plaza 30樓The Seafood House', '2025-10-08', 'The Seafood House 10月8日晚宴'),
-  ('20251010-004', 'Shaun Wun', '55418888', NULL, '旺角彌敦道520號CDB Plaza 30樓The Seafood House', '2025-10-08', 'The Seafood House 10月8日晚宴'),
-  ('20251010-005', '凌兆楷 Wilfred', '66837316', NULL, '旺角彌敦道520號CDB Plaza 30樓The Seafood House', '2025-10-08', 'The Seafood House 10月8日晚宴'),
-  ('20251010-006', 'Venus', '64740051', NULL, '旺角彌敦道520號CDB Plaza 30樓The Seafood House', '2025-10-08', 'The Seafood House 10月8日晚宴');
+INSERT INTO patients (case_number, name, phone, email, age, gender, event_location, event_date, event_summary) VALUES
+  ('20251010-002', 'Lam Lok', '97684471', NULL, 28, '男', '旺角彌敦道520號CDB Plaza 30樓The Seafood House', '2025-10-08', 'The Seafood House 10月8日晚宴'),
+  ('20251010-003', 'Pretty', '1', 'Dm_hito@dh.gov.hk', 25, '女', '旺角彌敦道520號CDB Plaza 30樓The Seafood House', '2025-10-08', 'The Seafood House 10月8日晚宴'),
+  ('20251010-004', 'Shaun Wun', '55418888', NULL, 32, '男', '旺角彌敦道520號CDB Plaza 30樓The Seafood House', '2025-10-08', 'The Seafood House 10月8日晚宴'),
+  ('20251010-005', '凌兆楷 Wilfred', '66837316', NULL, 29, '男', '旺角彌敦道520號CDB Plaza 30樓The Seafood House', '2025-10-08', 'The Seafood House 10月8日晚宴'),
+  ('20251010-006', 'Venus', '64740051', NULL, 26, '女', '旺角彌敦道520號CDB Plaza 30樓The Seafood House', '2025-10-08', 'The Seafood House 10月8日晚宴');
 
 -- 說明：
 -- 1. 這個 SQL 腳本用於初始化 Vercel Postgres 數據庫
