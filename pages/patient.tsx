@@ -76,7 +76,7 @@ export default function PatientPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
 
-  // Effect 2: 初始化對話
+  // Effect 2: 同步用戶屬性並顯示 iframe
   useEffect(() => {
     if (!patientInfo || !iframeUrl || hasInitialized.current) return
 
@@ -88,7 +88,7 @@ export default function PatientPage() {
 
       try {
         const userId = patientInfo.caseNumber || patientInfo.phone
-        console.log('📤 步驟 1: 同步用戶屬性...')
+        console.log('📤 同步用戶屬性到 GPTBots...')
         
         const properties = {
           age: patientInfo.age?.toString() || '',
@@ -104,28 +104,19 @@ export default function PatientPage() {
           body: JSON.stringify({ userId, properties }),
         })
         
+        console.log('✅ 用戶屬性已同步')
         setInitMessage(`正在為 ${patientInfo.name} 準備問卷...`)
         
-        console.log('📤 步驟 2: 準備訪談環境...')
-        const response = await fetch('/api/conversation/send', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId, message: `你好，我是${patientInfo.name}` }),
-        })
-
-        const data = await response.json()
-        console.log('📥 API 響應:', data)
-        
-        setInitMessage('準備完成，正在進入問卷...')
-        
+        // 直接顯示 iframe，對話將在 iframe 內開始
         setTimeout(() => {
           setShowIframe(true)
           setIsInitializing(false)
         }, 800)
       } catch (error) {
-        console.error('❌ 初始化對話失敗:', error)
+        console.error('❌ 同步失敗:', error)
         setInitMessage('正在進入問卷...')
         
+        // 即使同步失敗也顯示 iframe
         setTimeout(() => {
           setShowIframe(true)
           setIsInitializing(false)
