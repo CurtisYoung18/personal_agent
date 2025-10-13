@@ -66,6 +66,19 @@ export default function AdminDashboard() {
     router.push('/admin')
   }
 
+  // 根據事件日期自動生成案例編號
+  const generateCaseNumber = (eventDate: string) => {
+    if (!eventDate) return ''
+    
+    const date = new Date(eventDate)
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    const id = String(patients.length + 1).padStart(3, '0')
+    
+    return `HKDH-${year}-${month}${day}-${id}`
+  }
+
   const handleAddPatient = () => {
     setModalMode('add')
     setCurrentPatient({})
@@ -303,6 +316,7 @@ export default function AdminDashboard() {
                     onChange={(e) =>
                       setCurrentPatient({ ...currentPatient, email: e.target.value })
                     }
+                    placeholder="example@example.com"
                     required
                   />
                 </div>
@@ -329,6 +343,7 @@ export default function AdminDashboard() {
                     onChange={(e) =>
                       setCurrentPatient({ ...currentPatient, age: parseInt(e.target.value) })
                     }
+                    required
                   />
                 </div>
               </div>
@@ -387,25 +402,30 @@ export default function AdminDashboard() {
 
               <div className="form-row">
                 <div className="form-group">
-                  <label>案例編號 *</label>
+                  <label>事件日期 *</label>
                   <input
-                    type="text"
-                    value={currentPatient.caseNumber || ''}
-                    onChange={(e) =>
-                      setCurrentPatient({ ...currentPatient, caseNumber: e.target.value })
-                    }
-                    placeholder="HKDH-2025-1008-001"
+                    type="date"
+                    value={currentPatient.eventDate || ''}
+                    onChange={(e) => {
+                      const newDate = e.target.value
+                      const newCaseNumber = generateCaseNumber(newDate)
+                      setCurrentPatient({ 
+                        ...currentPatient, 
+                        eventDate: newDate,
+                        caseNumber: newCaseNumber
+                      })
+                    }}
                     required
                   />
                 </div>
                 <div className="form-group">
-                  <label>事件日期</label>
+                  <label>案例編號（自動生成）</label>
                   <input
-                    type="date"
-                    value={currentPatient.eventDate || ''}
-                    onChange={(e) =>
-                      setCurrentPatient({ ...currentPatient, eventDate: e.target.value })
-                    }
+                    type="text"
+                    value={currentPatient.caseNumber || ''}
+                    readOnly
+                    placeholder="請先選擇事件日期"
+                    style={{ backgroundColor: '#f7fafc', cursor: 'not-allowed' }}
                   />
                 </div>
               </div>
