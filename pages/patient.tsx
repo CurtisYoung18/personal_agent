@@ -89,6 +89,7 @@ export default function PatientPage() {
       try {
         const userId = patientInfo.caseNumber || patientInfo.phone
         console.log('📤 同步用戶屬性到 GPTBots...')
+        console.log('📋 原始患者信息:', patientInfo)
         
         // 處理用戶屬性：年齡轉為整數並添加單位，null 值使用 "please provide"
         const properties = {
@@ -99,13 +100,16 @@ export default function PatientPage() {
           patient_name: patientInfo.name || 'please provide',
         }
 
-        await fetch('/api/sync-properties', {
+        console.log('📤 準備同步的屬性:', properties)
+
+        const syncResponse = await fetch('/api/sync-properties', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userId, properties }),
         })
         
-        console.log('✅ 用戶屬性已同步')
+        const syncResult = await syncResponse.json()
+        console.log('✅ 用戶屬性已同步，結果:', syncResult)
         setInitMessage(`正在為 ${patientInfo.name} 準備問卷...`)
         
         // 直接顯示 iframe，對話將在 iframe 內開始
