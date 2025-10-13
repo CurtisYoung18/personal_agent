@@ -1,5 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
+import { 
+  HiSearch, HiUserAdd, HiPencil, HiTrash, HiLogout, 
+  HiChartBar, HiChatAlt2, HiDatabase, HiArrowLeft 
+} from 'react-icons/hi'
+import { BiLoaderAlt } from 'react-icons/bi'
 
 interface Patient {
   id: string
@@ -179,18 +184,18 @@ export default function AdminDashboard() {
               onClick={() => setShowDataManagement(true)} 
               className="nav-to-data-btn"
             >
-              數據管理
+              <HiDatabase /> 數據管理
             </button>
           ) : (
             <button 
               onClick={() => setShowDataManagement(false)} 
               className="nav-to-agent-btn"
             >
-              ← AI 助手
+              <HiArrowLeft /> AI 助手
             </button>
           )}
           <button onClick={handleLogout} className="logout-btn">
-            登出
+            <HiLogout /> 登出
           </button>
         </div>
       </header>
@@ -221,6 +226,7 @@ export default function AdminDashboard() {
 
           <div className="data-controls">
             <div className="search-box">
+              <HiSearch className="search-icon" />
               <input
                 type="text"
                 placeholder="搜尋患者姓名、電郵、電話或案例編號..."
@@ -229,7 +235,7 @@ export default function AdminDashboard() {
               />
             </div>
             <button onClick={handleAddPatient} className="add-btn">
-              <span>＋</span> 新增患者
+              <HiUserAdd /> 新增患者
             </button>
           </div>
 
@@ -262,13 +268,13 @@ export default function AdminDashboard() {
                     onClick={() => handleEditPatient(patient)}
                     className="edit-btn-small"
                   >
-                    ✏️ 編輯
+                    <HiPencil /> 編輯
                   </button>
                   <button
                     onClick={() => handleDeletePatient(patient.id)}
                     className="delete-btn-small"
                   >
-                    🗑️ 刪除
+                    <HiTrash /> 刪除
                   </button>
                 </td>
               </tr>

@@ -143,11 +143,18 @@ body {
   font-size: 14px;
   color: #4a5568;
   transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .back-btn:hover {
   background: #e2e8f0;
   transform: translateX(-2px);
+}
+
+.back-btn svg {
+  font-size: 18px;
 }
 
 @keyframes fadeIn {
@@ -306,12 +313,12 @@ body {
 }
 
 .method-icon {
-  font-size: 24px;
+  font-size: 26px;
   transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
 }
 
 .method-btn.active .method-icon {
-  transform: scale(1.1);
+  transform: scale(1.15);
 }
 
 .method-slider {
@@ -354,7 +361,8 @@ body {
 }
 
 .label-icon {
-  font-size: 18px;
+  font-size: 20px;
+  color: #667eea;
 }
 
 .form-group-animated input {
@@ -387,20 +395,26 @@ body {
 }
 
 /* 加載動畫（spinner） */
-.spinner {
+.spinner-icon {
   display: inline-block;
-  width: 14px;
-  height: 14px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: white;
-  border-radius: 50%;
-  animation: spin 0.6s linear infinite;
+  font-size: 18px;
+  animation: spin 0.8s linear infinite;
   margin-right: 8px;
   vertical-align: middle;
 }
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+.submit-btn svg {
+  vertical-align: middle;
+}
+
+.login-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* ==================== 患者頁面樣式 ==================== */
@@ -793,11 +807,22 @@ body {
 
 .search-box {
   flex: 1;
+  position: relative;
+}
+
+.search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 20px;
+  color: #a0aec0;
+  pointer-events: none;
 }
 
 .search-box input {
   width: 100%;
-  padding: 12px 16px;
+  padding: 12px 16px 12px 44px;
   border: 2px solid #e2e8f0;
   border-radius: 8px;
   font-size: 14px;
@@ -808,6 +833,10 @@ body {
   outline: none;
   border-color: #667eea;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.search-box input:focus + .search-icon {
+  color: #667eea;
 }
 
 .add-btn {
@@ -831,8 +860,35 @@ body {
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
-.add-btn span {
+.add-btn svg {
+  font-size: 18px;
+}
+
+.logout-btn,
+.nav-to-data-btn,
+.nav-to-agent-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.logout-btn svg,
+.nav-to-data-btn svg,
+.nav-to-agent-btn svg {
   font-size: 16px;
+}
+
+.edit-btn-small,
+.delete-btn-small {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  justify-content: center;
+}
+
+.edit-btn-small svg,
+.delete-btn-small svg {
+  font-size: 14px;
 }
 
 .patients-table-container {

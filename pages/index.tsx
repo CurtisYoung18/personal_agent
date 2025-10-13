@@ -1,5 +1,7 @@
 import { useState, FormEvent, useEffect } from 'react'
 import { useRouter } from 'next/router'
+import { HiPhone, HiMail, HiArrowLeft, HiLockClosed, HiCheckCircle } from 'react-icons/hi'
+import { BiLoaderAlt } from 'react-icons/bi'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -86,7 +88,7 @@ export default function LoginPage() {
               onClick={() => setShowLoginForm(false)}
               type="button"
             >
-              ← 返回
+              <HiArrowLeft /> 返回
             </button>
 
             <div className="login-header">
@@ -102,7 +104,7 @@ export default function LoginPage() {
                 onClick={() => setLoginMethod('phone')}
                 disabled={loading}
               >
-                <span className="method-icon">📱</span>
+                <HiPhone className="method-icon" />
                 <span>手機號碼</span>
               </button>
               <button
@@ -111,7 +113,7 @@ export default function LoginPage() {
                 onClick={() => setLoginMethod('email')}
                 disabled={loading}
               >
-                <span className="method-icon">✉️</span>
+                <HiMail className="method-icon" />
                 <span>電郵地址</span>
               </button>
               <div 
@@ -131,7 +133,7 @@ export default function LoginPage() {
                 }}
               >
                 <label htmlFor="phone">
-                  <span className="label-icon">📱</span>
+                  <HiPhone className="label-icon" />
                   電話號碼
                 </label>
                 <input
@@ -156,7 +158,7 @@ export default function LoginPage() {
                 }}
               >
                 <label htmlFor="email">
-                  <span className="label-icon">✉️</span>
+                  <HiMail className="label-icon" />
                   電郵地址
                 </label>
                 <input
@@ -178,17 +180,21 @@ export default function LoginPage() {
               <button type="submit" className="submit-btn" disabled={loading}>
                 {loading ? (
                   <>
-                    <span className="spinner"></span>
+                    <BiLoaderAlt className="spinner-icon" />
                     驗證中...
                   </>
                 ) : (
-                  '開始訪談'
+                  <>
+                    <HiCheckCircle style={{ marginRight: '8px' }} />
+                    開始訪談
+                  </>
                 )}
               </button>
             </form>
 
             <div className="login-footer">
-              <small>🔒 您的資料將會被保密處理</small>
+              <HiLockClosed style={{ marginRight: '6px', verticalAlign: 'middle' }} />
+              <small>您的資料將會被保密處理</small>
             </div>
           </div>
         </div>
