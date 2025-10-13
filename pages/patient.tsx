@@ -37,8 +37,53 @@ export default function PatientPage() {
     }
 
     // 獲取患者信息
-    fetchPatientInfo(id as string)
-  }, [id, router])
+    const loadPatientInfo = async () => {
+      try {
+        const response = await fetch(`/api/patient?id=${id}`)
+        const data = await response.json()
+
+        if (response.ok && data.success) {
+          setPatientInfo(data.patient)
+          
+          // 使用 GPTBots iframe URL
+          const baseUrl = 'https://www.gptbots.ai/widget/eek1z5tclbpvaoak5609epw/chat.html'
+          const userId = data.patient.caseNumber || data.patient.phone
+          const userEmail = data.patient.email || ''
+          
+          const params = new URLSearchParams({
+            user_id: userId,
+          })
+          
+          if (userEmail) {
+            params.set('email', userEmail)
+          }
+          
+          const fullUrl = `${baseUrl}?${params.toString()}`
+          
+          console.log('🔗 iframe URL:', fullUrl)
+          console.log('📋 患者屬性（將通過 useEffect 同步）:', {
+            age: data.patient.age?.toString() || '',
+            case_id: data.patient.caseNumber || '',
+            detail: data.patient.eventSummary || '',
+            mobile: data.patient.phone || '',
+            patient_name: data.patient.name || '',
+          })
+          
+          setIframeUrl(fullUrl)
+        } else {
+          router.push('/')
+        }
+      } catch (err) {
+        console.error('Failed to fetch patient info:', err)
+        router.push('/')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadPatientInfo()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id])
 
   // 當獲取到患者信息後，初始化對話
   useEffect(() => {
@@ -49,7 +94,7 @@ export default function PatientPage() {
     // 初始化對話：同步屬性 → 準備 iframe → 發送歡迎消息
     const initializeConversation = async () => {
       setIsInitializing(true)
-      setInitMessage('正在建立連接...')
+      setInitMessage(`${patientInfo.name}，您好`)
 
       try {
         // Step 1: 同步用戶屬性到 GPTBots
@@ -70,7 +115,7 @@ export default function PatientPage() {
           body: JSON.stringify({ userId, properties }),
         })
         
-        setInitMessage(`您好 ${patientInfo.name}，正在為您準備訪談...`)
+        setInitMessage(`正在為 ${patientInfo.name} 準備問卷...`)
         
         // Step 2: 創建對話並發送歡迎消息
         console.log('📤 步驟 2: 準備訪談環境...')
@@ -83,7 +128,7 @@ export default function PatientPage() {
         const data = await response.json()
         console.log('📥 API 響應:', data)
         
-        setInitMessage('準備完成，正在進入訪談...')
+        setInitMessage('準備完成，正在進入問卷...')
         
         // Step 3: 顯示 iframe
         setTimeout(() => {
@@ -92,7 +137,7 @@ export default function PatientPage() {
         }, 800)
       } catch (error) {
         console.error('❌ 初始化對話失敗:', error)
-        setInitMessage('正在進入訪談...')
+        setInitMessage('正在進入問卷...')
         
         // 即使出錯也顯示 iframe
         setTimeout(() => {
@@ -104,59 +149,8 @@ export default function PatientPage() {
 
     // 開始初始化流程
     initializeConversation()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [patientInfo, iframeUrl])
-
-
-  const fetchPatientInfo = async (patientId: string) => {
-    try {
-      const response = await fetch(`/api/patient?id=${patientId}`)
-      const data = await response.json()
-
-      if (response.ok && data.success) {
-        setPatientInfo(data.patient)
-        
-        // 使用 GPTBots iframe URL
-        // 根據補充資料，iframe 只支持 user_id 和 email 兩個 URL 參數
-        const baseUrl = 'https://www.gptbots.ai/widget/eek1z5tclbpvaoak5609epw/chat.html'
-        
-        // 使用案例編號作為 user_id（唯一標識）
-        const userId = data.patient.caseNumber || data.patient.phone
-        const userEmail = data.patient.email || ''
-        
-        // 只傳遞 GPTBots 支持的參數：user_id 和 email
-        const params = new URLSearchParams({
-          user_id: userId,
-        })
-        
-        if (userEmail) {
-          params.set('email', userEmail)
-        }
-        
-        const fullUrl = `${baseUrl}?${params.toString()}`
-        
-        console.log('🔗 iframe URL:', fullUrl)
-        console.log('📋 患者屬性（將通過 useEffect 同步）:', {
-          age: data.patient.age?.toString() || '',
-          case_id: data.patient.caseNumber || '',
-          detail: data.patient.eventSummary || '',
-          mobile: data.patient.phone || '',
-          patient_name: data.patient.name || '',
-        })
-        
-        setIframeUrl(fullUrl)
-        // 屬性同步將在 useEffect 中執行，確保 iframe 已加載
-      } else {
-        // 驗證失敗，清除會話並返回登錄頁
-        localStorage.removeItem('hp_patient_session')
-        router.push('/')
-      }
-    } catch (err) {
-      console.error('Failed to fetch patient info:', err)
-      router.push('/')
-    } finally {
-      setLoading(false)
-    }
-  }
 
   // 處理登出
   const handleLogout = () => {
