@@ -336,7 +336,7 @@ export default function AdminDashboard() {
                   />
                 </div>
                 <div className="form-group">
-                  <label>年齡</label>
+                  <label>年齡 *</label>
                   <input
                     type="number"
                     value={currentPatient.age || ''}
@@ -443,7 +443,7 @@ export default function AdminDashboard() {
               </div>
 
               <div className="form-group">
-                <label>事件詳情 *（⚠️ 請包含年份，如：2025年10月8日）</label>
+                <label>事件詳情 *（⚠️ 請包含日期，這將決定agent是否知道具體用餐時間，如：2025年10月8日）</label>
                 <input
                   type="text"
                   value={currentPatient.eventSummary || ''}
