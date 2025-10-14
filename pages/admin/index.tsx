@@ -136,9 +136,10 @@ export default function AdminDashboard() {
       
       if (data.success) {
         alert('用户添加成功！')
-        setNewUser({ account: '', password: '', name: '' })
+        setNewUser({ account: '', password: '', name: '', avatar_url: '' })
+        setPreviewAvatar('')
         setShowAddForm(false)
-        fetchUsers() // 刷新列表
+        fetchUsers()
       } else {
         setError(data.message || '添加用户失败')
       }
