@@ -55,12 +55,17 @@ npm install
 
 3. **配置环境变量**
 
-创建 `.env.local` 文件：
+**快速方法**：使用环境变量生成助手
+```bash
+./generate-env-template.sh
+```
+
+**手动方法**：创建 `.env.local` 文件
 ```env
 # Neon Postgres 数据库连接
-POSTGRES_URL="postgres://username:password@host/database"
-POSTGRES_PRISMA_URL="postgres://username:password@host/database?pgbouncer=true"
-POSTGRES_URL_NON_POOLING="postgres://username:password@host/database"
+POSTGRES_URL="postgres://username:password@host/database?sslmode=require"
+POSTGRES_PRISMA_URL="postgres://username:password@host/database?pgbouncer=true&connect_timeout=15"
+POSTGRES_URL_NON_POOLING="postgres://username:password@host/database?sslmode=require"
 POSTGRES_USER="your_user"
 POSTGRES_HOST="your_host"
 POSTGRES_PASSWORD="your_password"
@@ -69,6 +74,8 @@ POSTGRES_DATABASE="your_database"
 # GPTBots API（必需）
 GPTBOTS_API_KEY="app-uwMHXO95dlUZeUKkM7C8VtTW"
 ```
+
+> 💡 **提示**：从 Neon Console 复制完整的连接字符串，然后运行 `./generate-env-template.sh` 自动生成所有环境变量。
 
 4. **运行开发服务器**
 ```bash
@@ -111,6 +118,8 @@ INSERT INTO users (account, password, name) VALUES
 ```
 
 ### 步骤 3: 部署到 Vercel
+
+⚠️ **重要**：Vercel 部署需要在 Dashboard 中手动配置环境变量，详细步骤请查看 [VERCEL_ENV_SETUP.md](./VERCEL_ENV_SETUP.md)
 
 1. **推送代码到 Git 仓库**
 ```bash
