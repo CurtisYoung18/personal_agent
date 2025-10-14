@@ -21,7 +21,6 @@ interface Patient {
   eventLocation?: string
   eventDate?: string
   eventSummary?: string
-  onsetDatetime?: string
 }
 
 export default function AdminDashboard() {
@@ -258,7 +257,6 @@ export default function AdminDashboard() {
               <th>職業</th>
               <th>案例編號</th>
               <th>事件日期</th>
-              <th>案發時間</th>
               <th>事件地點</th>
               <th>事件詳情</th>
               <th className="sticky-actions">操作</th>
@@ -280,18 +278,6 @@ export default function AdminDashboard() {
                 <td>{patient.occupation || '-'}</td>
                 <td className="case-number-cell">{patient.caseNumber || '-'}</td>
                 <td>{patient.eventDate || '-'}</td>
-                <td className="datetime-cell">
-                  {patient.onsetDatetime 
-                    ? new Date(patient.onsetDatetime).toLocaleString('zh-HK', {
-                        year: 'numeric',
-                        month: '2-digit',
-                        day: '2-digit',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })
-                    : '-'
-                  }
-                </td>
                 <td className="location-cell">{patient.eventLocation || '-'}</td>
                 <td className="summary-cell">{patient.eventSummary || '-'}</td>
                 <td className="actions sticky-actions">
