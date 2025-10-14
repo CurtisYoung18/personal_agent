@@ -28,13 +28,13 @@ export default function LoginPage() {
       const data = await response.json()
 
       if (response.ok && data.success) {
-        // 驗證成功，跳轉到聊天頁面
+        // 验证成功，跳转到聊天页面
         router.push(`/chat?id=${data.userId}`)
       } else {
-        setError(data.message || '登入失敗，請檢查您的帳號和密碼')
+        setError(data.message || '登录失败，请检查您的账号和密码')
       }
     } catch (err) {
-      setError('網絡錯誤，請稍後重試')
+      setError('网络错误，请稍后重试')
     } finally {
       setLoading(false)
     }
@@ -54,16 +54,16 @@ export default function LoginPage() {
               />
             </div>
             <div className="welcome-content">
-              <h1>個人工作助手</h1>
+              <h1>个人工作助手</h1>
               <span className="demo-badge">Personal Agent</span>
               <p className="welcome-desc">
-                歡迎使用智能工作助手系統
+                欢迎使用智能工作助手系统
               </p>
               <button 
                 className="enter-btn"
                 onClick={() => setShowLoginForm(true)}
               >
-                進入登入
+                进入登录
               </button>
             </div>
           </div>
@@ -81,22 +81,22 @@ export default function LoginPage() {
             </button>
 
             <div className="login-header">
-              <h2>用戶登入</h2>
-              <p>請輸入您的帳號和密碼</p>
+              <h2>用户登录</h2>
+              <p>请输入您的账号和密码</p>
             </div>
 
             <form onSubmit={handleSubmit} className="login-form">
               <div className="form-group-animated active">
                 <label htmlFor="account">
                   <HiUser className="label-icon" />
-                  帳號
+                  账号
                 </label>
                 <input
                   id="account"
                   type="text"
                   value={account}
                   onChange={(e) => setAccount(e.target.value)}
-                  placeholder="請輸入帳號"
+                  placeholder="请输入账号"
                   disabled={loading}
                   required
                   autoComplete="username"
@@ -106,14 +106,14 @@ export default function LoginPage() {
               <div className="form-group-animated active">
                 <label htmlFor="password">
                   <HiLockClosed className="label-icon" />
-                  密碼
+                  密码
                 </label>
                 <input
                   id="password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="請輸入密碼"
+                  placeholder="请输入密码"
                   disabled={loading}
                   required
                   autoComplete="current-password"
@@ -126,12 +126,12 @@ export default function LoginPage() {
                 {loading ? (
                   <>
                     <BiLoaderAlt className="spinner-icon" />
-                    登入中...
+                    登录中...
                   </>
                 ) : (
                   <>
                     <HiCheckCircle style={{ marginRight: '8px' }} />
-                    登入
+                    登录
                   </>
                 )}
               </button>
@@ -139,7 +139,7 @@ export default function LoginPage() {
 
             <div className="login-footer">
               <HiLockClosed style={{ marginRight: '6px', verticalAlign: 'middle' }} />
-              <small>您的資料將會被保密處理</small>
+              <small>您的资料将会被保密处理</small>
             </div>
           </div>
         </div>

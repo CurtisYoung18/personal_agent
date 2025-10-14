@@ -198,91 +198,94 @@ export default function ChatPage() {
         throw new Error('發送失敗')
       }
 
-      // 處理 SSE 流
+      // 处理 SSE 流
       const reader = response.body?.getReader()
       const decoder = new TextDecoder()
 
       if (!reader) {
-        throw new Error('無法讀取響應')
+        throw new Error('无法读取响应')
       }
 
       let accumulatedText = ''
+      let chunkCount = 0
 
       while (true) {
         const { done, value } = await reader.read()
         
-        if (done) break
+        if (done) {
+          console.log(`✅ 流式传输完成，共收到 ${chunkCount} 个数据块`)
+          break
+        }
 
         const chunk = decoder.decode(value, { stream: true })
+        chunkCount++
+        console.log(`📦 收到数据块 #${chunkCount}:`, chunk.substring(0, 100))
+        
         const lines = chunk.split('\n')
 
         for (const line of lines) {
-          if (line.startsWith('{"code":3')) {
-            // 文本消息
-            try {
-              const data = JSON.parse(line)
-              if (data.data) {
-                accumulatedText += data.data
-                // 更新消息
-                setMessages(prev => 
-                  prev.map(msg => 
-                    msg.id === aiMessageId 
-                      ? { ...msg, content: accumulatedText }
-                      : msg
-                  )
+          if (!line.trim()) continue
+          
+          try {
+            const data = JSON.parse(line)
+            console.log('📝 解析数据:', data)
+            
+            // 检查不同的响应格式
+            if (data.code === 3 && data.data) {
+              // 文本消息
+              accumulatedText += data.data
+              setMessages(prev => 
+                prev.map(msg => 
+                  msg.id === aiMessageId 
+                    ? { ...msg, content: accumulatedText }
+                    : msg
                 )
-              }
-            } catch (e) {
-              console.error('解析錯誤:', e)
+              )
+            } else if (data.code === 0) {
+              // 结束标记
+              console.log('✅ 收到结束标记')
+            } else if (data.event === 'message' && data.data) {
+              // 另一种可能的格式
+              accumulatedText += data.data
+              setMessages(prev => 
+                prev.map(msg => 
+                  msg.id === aiMessageId 
+                    ? { ...msg, content: accumulatedText }
+                    : msg
+                )
+              )
             }
-          } else if (line.startsWith('{"code":0')) {
-            // 結束標記
-            console.log('✅ 流式傳輸完成')
+          } catch (e) {
+            console.error('❌ JSON 解析错误:', e, '原始内容:', line)
           }
         }
       }
+      
+      // 如果没有收到任何内容，显示错误
+      if (accumulatedText === '') {
+        console.warn('⚠️ 未收到任何 AI 回复内容')
+        setMessages(prev => 
+          prev.map(msg => 
+            msg.id === aiMessageId 
+              ? { ...msg, content: '(AI 未返回内容，请重试)' }
+              : msg
+          )
+        )
+      }
     } catch (error) {
-      console.error('發送消息錯誤:', error)
-      // 移除失敗的 AI 消息
+      console.error('❌ 发送消息错误:', error)
+      // 移除失败的 AI 消息
       setMessages(prev => prev.filter(msg => msg.id !== aiMessageId))
-      alert('發送失敗，請重試')
+      alert('发送失败，请重试')
     } finally {
       setSending(false)
       setIsStreaming(false)
     }
   }
 
-  // 處理重新開始對話
-  const handleRestart = async () => {
-    if (!confirm('確定要重新開始對話嗎？')) return
-
-    setMessages([])
-    setLoading(true)
-
-    try {
-      const convResponse = await fetch('/api/conversation/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: userInfo?.account }),
-      })
-
-      const convData = await convResponse.json()
-
-      if (convResponse.ok && convData.success) {
-        setConversationId(convData.conversationId)
-        console.log('✅ 新對話創建成功:', convData.conversationId)
-      }
-    } catch (error) {
-      console.error('重新開始失敗:', error)
-      alert('重新開始失敗，請刷新頁面')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // 處理登出
+  // 处理登出
   const handleLogout = () => {
-    if (confirm('確定要登出嗎？')) {
+    if (confirm('确定要登出吗？')) {
       resetTimer()
       router.push('/')
     }
@@ -296,7 +299,7 @@ export default function ChatPage() {
     }
   }
 
-  // 載入階段
+  // 加载阶段
   if (loading) {
     return (
       <div className="loading-container">
@@ -312,35 +315,11 @@ export default function ChatPage() {
 
   return (
     <div className="chat-page fade-in">
-      {/* 頂部導航欄 */}
-      <header className="chat-page-header">
-        <div className="header-content">
-          <div className="header-system-info">
-            <h1>個人工作助手</h1>
-            <p>AI 智能聊天系統</p>
-          </div>
-          <div className="header-user-info">
-            <span className="user-item">
-              <strong>用戶：</strong>{userInfo.name || userInfo.account}
-            </span>
-            <span className="user-separator">|</span>
-            <span className="user-item">
-              <strong>帳號：</strong>{userInfo.account}
-            </span>
-          </div>
-        </div>
-        <div className="header-actions">
-          <div className="timer-display">
-            <span className="timer-icon">⏱️</span>
-            <span className="timer-time">{formatTime(elapsedTime)}</span>
-          </div>
-          <button onClick={handleRestart} className="restart-btn" title="重新開始">
-            <HiRefresh />
-          </button>
-          <button onClick={handleLogout} className="logout-btn">
-            登出
-          </button>
-        </div>
+      {/* 顶部导航栏 - 仅保留登出按钮 */}
+      <header className="chat-page-header-minimal">
+        <button onClick={handleLogout} className="logout-btn-minimal">
+          登出
+        </button>
       </header>
 
       {/* 聊天容器 */}
@@ -349,7 +328,7 @@ export default function ChatPage() {
           {messages.length === 0 && (
             <div className="welcome-message">
               <h2>👋 您好，{userInfo.name || userInfo.account}！</h2>
-              <p>我是您的個人工作助手，有什麼可以幫到您的嗎？</p>
+              <p>我是您的个人工作助手，有什么可以帮到您的吗？</p>
             </div>
           )}
           
@@ -379,7 +358,7 @@ export default function ChatPage() {
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="輸入消息...（Shift+Enter 換行，Enter 發送）"
+            placeholder="输入消息...（Shift+Enter 换行，Enter 发送）"
             disabled={sending}
             rows={3}
             className="chat-input"
