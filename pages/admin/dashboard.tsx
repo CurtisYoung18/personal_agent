@@ -93,7 +93,12 @@ export default function AdminDashboard() {
 
   const handleEditPatient = (patient: Patient) => {
     setModalMode('edit')
-    setCurrentPatient(patient)
+    // 格式化日期为 YYYY-MM-DD 格式，以便 date input 正确显示
+    const formattedPatient = {
+      ...patient,
+      eventDate: patient.eventDate ? patient.eventDate.split('T')[0] : patient.eventDate
+    }
+    setCurrentPatient(formattedPatient)
     setShowModal(true)
   }
 
@@ -382,12 +387,13 @@ export default function AdminDashboard() {
 
               <div className="form-row">
                 <div className="form-group">
-                  <label>性別</label>
+                  <label>性別 *</label>
                   <select
                     value={currentPatient.gender || ''}
                     onChange={(e) =>
                       setCurrentPatient({ ...currentPatient, gender: e.target.value })
                     }
+                    required
                   >
                     <option value="">請選擇</option>
                     <option value="男">男</option>
