@@ -15,7 +15,7 @@ CREATE INDEX idx_account ON users(account);
 -- 插入默認測試帳號
 -- 密碼都是 "password123"（實際部署時請使用加密）
 INSERT INTO users (account, password, name) VALUES
-  ('admin', 'password123', '管理員');
+  ('admin', 'admin123', 'Curtis');
 
 -- 說明：
 -- 1. 這個 SQL 腳本用於初始化 Vercel Postgres 數據庫
