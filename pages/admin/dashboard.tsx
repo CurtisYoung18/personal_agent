@@ -482,24 +482,9 @@ export default function AdminDashboard() {
                   onChange={(e) =>
                     setCurrentPatient({ ...currentPatient, eventSummary: e.target.value })
                   }
-                  placeholder="例如：The Seafood House 2025年10月8日晚宴"
+                  placeholder="例如：The Seafood House 晚宴"
                   required
                 />
-              </div>
-
-              <div className="form-group">
-                <label>案發時間（病發時間）</label>
-                <input
-                  type="datetime-local"
-                  value={currentPatient.onsetDatetime || ''}
-                  onChange={(e) =>
-                    setCurrentPatient({ ...currentPatient, onsetDatetime: e.target.value })
-                  }
-                  placeholder="選擇病發日期和時間"
-                />
-                <small style={{fontSize: '12px', color: '#718096', marginTop: '4px', display: 'block'}}>
-                  患者開始出現症狀的日期和時間
-                </small>
               </div>
 
               <div className="modal-actions">
