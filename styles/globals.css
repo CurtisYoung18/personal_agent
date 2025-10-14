@@ -598,12 +598,12 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  margin: 20px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  border-radius: 16px;
+  margin: 0;
+  background: transparent;
+  backdrop-filter: none;
+  border-radius: 0;
   overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  box-shadow: none;
 }
 
 .chat-messages {
@@ -613,43 +613,46 @@ body {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  /* 移除白色背景，使用透明 */
 }
 
-/* 美化滾動條 */
+/* 美化滾動條（半透明樣式） */
 .chat-messages::-webkit-scrollbar {
   width: 8px;
 }
 
 .chat-messages::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 4px;
 }
 
 .chat-messages::-webkit-scrollbar-thumb {
-  background: #cbd5e0;
+  background: rgba(255, 255, 255, 0.3);
   border-radius: 4px;
 }
 
 .chat-messages::-webkit-scrollbar-thumb:hover {
-  background: #a0aec0;
+  background: rgba(255, 255, 255, 0.5);
 }
 
 /* 歡迎消息 */
 .welcome-message {
   text-align: center;
   padding: 60px 20px;
-  color: #4a5568;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .welcome-message h2 {
   font-size: 28px;
   margin-bottom: 12px;
-  color: #2d3748;
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .welcome-message p {
   font-size: 16px;
-  color: #718096;
+  color: rgba(255, 255, 255, 0.8);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 /* 消息樣式 */
@@ -753,15 +756,16 @@ body {
   display: flex;
   gap: 12px;
   padding: 16px 24px;
-  background: white;
-  border-top: 1px solid #e2e8f0;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
   align-items: flex-end;
 }
 
 .chat-input {
   flex: 1;
   padding: 12px 16px;
-  border: 2px solid #e2e8f0;
+  border: 2px solid rgba(255, 255, 255, 0.3);
   border-radius: 12px;
   font-size: 15px;
   font-family: inherit;
@@ -769,16 +773,19 @@ body {
   transition: all 0.2s;
   max-height: 150px;
   overflow-y: auto;
+  background: rgba(255, 255, 255, 0.9);
+  color: #2d3748;
 }
 
 .chat-input:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: rgba(255, 255, 255, 0.6);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.95);
 }
 
 .chat-input:disabled {
-  background: #f7fafc;
+  background: rgba(255, 255, 255, 0.5);
   cursor: not-allowed;
 }
 
