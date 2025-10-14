@@ -23,6 +23,12 @@ interface Patient {
   eventSummary?: string
 }
 
+interface Event {
+  date: string
+  location: string
+  summary: string
+}
+
 export default function AdminDashboard() {
   const router = useRouter()
   const [patients, setPatients] = useState<Patient[]>([])
@@ -32,6 +38,12 @@ export default function AdminDashboard() {
   const [showDataManagement, setShowDataManagement] = useState(false)
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add')
   const [currentPatient, setCurrentPatient] = useState<Partial<Patient>>({})
+  
+  // 新增事件相关状态
+  const [existingEvents, setExistingEvents] = useState<Event[]>([])
+  const [isNewEvent, setIsNewEvent] = useState(true)
+  const [selectedEvent, setSelectedEvent] = useState<string>('')
+  const [generatedCaseId, setGeneratedCaseId] = useState<string>('')
 
   useEffect(() => {
     // 檢查管理員登入狀態
@@ -66,6 +78,37 @@ export default function AdminDashboard() {
     }
   }
 
+  const fetchExistingEvents = async () => {
+    try {
+      const response = await fetch('/api/admin/events')
+      const data = await response.json()
+      
+      if (data.success) {
+        setExistingEvents(data.events)
+      }
+    } catch (error) {
+      console.error('Failed to fetch events:', error)
+    }
+  }
+
+  const generateCaseId = async (eventDate: string, eventSummary: string) => {
+    try {
+      const response = await fetch('/api/admin/generate-case-id', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event_date: eventDate, event_summary: eventSummary }),
+      })
+      const data = await response.json()
+      
+      if (data.success) {
+        setGeneratedCaseId(data.caseId)
+        setCurrentPatient(prev => ({ ...prev, caseNumber: data.caseId }))
+      }
+    } catch (error) {
+      console.error('Failed to generate case ID:', error)
+    }
+  }
+
   const handleLogout = () => {
     localStorage.removeItem('admin_session')
     router.push('/admin')
@@ -84,9 +127,13 @@ export default function AdminDashboard() {
     return `HKDH-${year}-${month}${day}-${id}`
   }
 
-  const handleAddPatient = () => {
+  const handleAddPatient = async () => {
     setModalMode('add')
     setCurrentPatient({})
+    setIsNewEvent(true)
+    setSelectedEvent('')
+    setGeneratedCaseId('')
+    await fetchExistingEvents()
     setShowModal(true)
   }
 
@@ -319,6 +366,157 @@ export default function AdminDashboard() {
             </div>
 
             <form onSubmit={handleSavePatient} className="modal-form">
+              {/* 第一步：選擇事件類型（僅新增模式） */}
+              {modalMode === 'add' && (
+                <>
+                  <div className="event-type-section">
+                    <h3 style={{ fontSize: '15px', fontWeight: '600', marginBottom: '12px', color: '#2d3748' }}>
+                      📋 第一步：選擇事件類型
+                    </h3>
+                    <div className="event-type-toggle">
+                      <button
+                        type="button"
+                        className={`event-type-btn ${isNewEvent ? 'active' : ''}`}
+                        onClick={() => {
+                          setIsNewEvent(true)
+                          setSelectedEvent('')
+                          setCurrentPatient({ ...currentPatient, eventDate: '', eventLocation: '', eventSummary: '', caseNumber: '' })
+                        }}
+                      >
+                        ➕ 新增事件
+                      </button>
+                      <button
+                        type="button"
+                        className={`event-type-btn ${!isNewEvent ? 'active' : ''}`}
+                        onClick={() => {
+                          setIsNewEvent(false)
+                          setGeneratedCaseId('')
+                        }}
+                      >
+                        📂 已有事件
+                      </button>
+                    </div>
+                  </div>
+
+                  <hr style={{ margin: '20px 0', border: 'none', borderTop: '1px solid #e5e7eb' }} />
+
+                  {/* 事件信息填寫 */}
+                  {isNewEvent ? (
+                    <div className="event-info-section">
+                      <h3 style={{ fontSize: '15px', fontWeight: '600', marginBottom: '12px', color: '#2d3748' }}>
+                        📝 第二步：填寫新事件信息
+                      </h3>
+                      <div className="form-row">
+                        <div className="form-group">
+                          <label>事件日期 *</label>
+                          <input
+                            type="date"
+                            value={currentPatient.eventDate || ''}
+                            onChange={async (e) => {
+                              const newDate = e.target.value
+                              setCurrentPatient({ ...currentPatient, eventDate: newDate })
+                              if (newDate && currentPatient.eventSummary) {
+                                await generateCaseId(newDate, currentPatient.eventSummary)
+                              }
+                            }}
+                            required
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label>事件地點 *</label>
+                          <input
+                            type="text"
+                            value={currentPatient.eventLocation || ''}
+                            onChange={(e) =>
+                              setCurrentPatient({ ...currentPatient, eventLocation: e.target.value })
+                            }
+                            placeholder="例如：The Seafood House, 旺角"
+                            required
+                          />
+                        </div>
+                      </div>
+                      <div className="form-group">
+                        <label>事件詳情 *</label>
+                        <input
+                          type="text"
+                          value={currentPatient.eventSummary || ''}
+                          onChange={async (e) => {
+                            const newSummary = e.target.value
+                            setCurrentPatient({ ...currentPatient, eventSummary: newSummary })
+                            if (currentPatient.eventDate && newSummary) {
+                              await generateCaseId(currentPatient.eventDate, newSummary)
+                            }
+                          }}
+                          placeholder="例如：The Seafood House 10月8日晚宴"
+                          required
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="event-info-section">
+                      <h3 style={{ fontSize: '15px', fontWeight: '600', marginBottom: '12px', color: '#2d3748' }}>
+                        📂 第二步：選擇已有事件
+                      </h3>
+                      <div className="form-group">
+                        <label>選擇事件 *</label>
+                        <select
+                          value={selectedEvent}
+                          onChange={async (e) => {
+                            const eventIndex = parseInt(e.target.value, 10)
+                            setSelectedEvent(e.target.value)
+                            if (!isNaN(eventIndex) && existingEvents[eventIndex]) {
+                              const event = existingEvents[eventIndex]
+                              setCurrentPatient({
+                                ...currentPatient,
+                                eventDate: event.date,
+                                eventLocation: event.location,
+                                eventSummary: event.summary,
+                              })
+                              await generateCaseId(event.date, event.summary)
+                            }
+                          }}
+                          required
+                        >
+                          <option value="">請選擇已有事件</option>
+                          {existingEvents.map((event, index) => (
+                            <option key={index} value={index}>
+                              {event.summary} - {event.date}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      {selectedEvent && (
+                        <div style={{ padding: '12px', background: '#f7fafc', borderRadius: '8px', fontSize: '13px' }}>
+                          <p><strong>日期：</strong>{currentPatient.eventDate}</p>
+                          <p><strong>地點：</strong>{currentPatient.eventLocation}</p>
+                          <p><strong>詳情：</strong>{currentPatient.eventSummary}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* 案例編號（自動生成） */}
+                  {generatedCaseId && (
+                    <div className="form-group">
+                      <label>案例編號（自動生成）</label>
+                      <input
+                        type="text"
+                        value={generatedCaseId}
+                        readOnly
+                        style={{ backgroundColor: '#e6fffa', fontWeight: '600', color: '#047857', cursor: 'not-allowed' }}
+                      />
+                    </div>
+                  )}
+
+                  <hr style={{ margin: '20px 0', border: 'none', borderTop: '2px solid #4299e1' }} />
+                </>
+              )}
+
+              {/* 患者基本信息（必填項優先） */}
+              <h3 style={{ fontSize: '15px', fontWeight: '600', marginBottom: '12px', color: '#2d3748' }}>
+                👤 {modalMode === 'add' ? '第三步：' : ''}患者基本信息（必填項）
+              </h3>
+              
               <div className="form-row">
                 <div className="form-group">
                   <label>姓名 *</label>
@@ -331,47 +529,6 @@ export default function AdminDashboard() {
                     required
                   />
                 </div>
-                <div className="form-group">
-                  <label>電郵 *</label>
-                  <input
-                    type="email"
-                    value={currentPatient.email || ''}
-                    onChange={(e) =>
-                      setCurrentPatient({ ...currentPatient, email: e.target.value })
-                    }
-                    placeholder="example@example.com"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label>電話 *</label>
-                  <input
-                    type="tel"
-                    value={currentPatient.phone || ''}
-                    onChange={(e) =>
-                      setCurrentPatient({ ...currentPatient, phone: e.target.value })
-                    }
-                    placeholder="+852 9123 4567"
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label>年齡 *</label>
-                  <input
-                    type="number"
-                    value={currentPatient.age || ''}
-                    onChange={(e) =>
-                      setCurrentPatient({ ...currentPatient, age: parseInt(e.target.value) })
-                    }
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="form-row">
                 <div className="form-group">
                   <label>性別 *</label>
                   <select
@@ -386,6 +543,55 @@ export default function AdminDashboard() {
                     <option value="女">女</option>
                   </select>
                 </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>年齡 *</label>
+                  <input
+                    type="number"
+                    value={currentPatient.age || ''}
+                    onChange={(e) =>
+                      setCurrentPatient({ ...currentPatient, age: parseInt(e.target.value) })
+                    }
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>電話 *</label>
+                  <input
+                    type="tel"
+                    value={currentPatient.phone || ''}
+                    onChange={(e) =>
+                      setCurrentPatient({ ...currentPatient, phone: e.target.value })
+                    }
+                    placeholder="+852 9123 4567"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>電郵 *</label>
+                <input
+                  type="email"
+                  value={currentPatient.email || ''}
+                  onChange={(e) =>
+                    setCurrentPatient({ ...currentPatient, email: e.target.value })
+                  }
+                  placeholder="example@example.com"
+                  required
+                />
+              </div>
+
+              <hr style={{ margin: '20px 0', border: 'none', borderTop: '1px solid #e5e7eb' }} />
+
+              {/* 補充信息（選填） */}
+              <h3 style={{ fontSize: '15px', fontWeight: '600', marginBottom: '12px', color: '#718096' }}>
+                📄 補充信息（選填）
+              </h3>
+
+              <div className="form-row">
                 <div className="form-group">
                   <label>身份證號</label>
                   <input
@@ -397,17 +603,16 @@ export default function AdminDashboard() {
                     placeholder="H123456(7)"
                   />
                 </div>
-              </div>
-
-              <div className="form-group">
-                <label>職業</label>
-                <input
-                  type="text"
-                  value={currentPatient.occupation || ''}
-                  onChange={(e) =>
-                    setCurrentPatient({ ...currentPatient, occupation: e.target.value })
-                  }
-                />
+                <div className="form-group">
+                  <label>職業</label>
+                  <input
+                    type="text"
+                    value={currentPatient.occupation || ''}
+                    onChange={(e) =>
+                      setCurrentPatient({ ...currentPatient, occupation: e.target.value })
+                    }
+                  />
+                </div>
               </div>
 
               <div className="form-group">
@@ -421,70 +626,12 @@ export default function AdminDashboard() {
                 />
               </div>
 
-              <hr style={{ margin: '20px 0', border: 'none', borderTop: '1px solid #e5e7eb' }} />
-              <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '15px' }}>🔍 案例資訊</h3>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label>事件日期 *</label>
-                  <input
-                    type="date"
-                    value={currentPatient.eventDate || ''}
-                    onChange={(e) => {
-                      const newDate = e.target.value
-                      const newCaseNumber = generateCaseNumber(newDate)
-                      setCurrentPatient({ 
-                        ...currentPatient, 
-                        eventDate: newDate,
-                        caseNumber: newCaseNumber
-                      })
-                    }}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label>案例編號（自動生成）</label>
-                  <input
-                    type="text"
-                    value={currentPatient.caseNumber || ''}
-                    readOnly
-                    placeholder="請先選擇事件日期"
-                    style={{ backgroundColor: '#f7fafc', cursor: 'not-allowed' }}
-                  />
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label>事件地點</label>
-                <input
-                  type="text"
-                  value={currentPatient.eventLocation || ''}
-                  onChange={(e) =>
-                    setCurrentPatient({ ...currentPatient, eventLocation: e.target.value })
-                  }
-                  placeholder="例如：The Seafood House, 尖沙咀"
-                />
-              </div>
-
-              <div className="form-group">
-                <label>事件詳情 * </label>
-                <input
-                  type="text"
-                  value={currentPatient.eventSummary || ''}
-                  onChange={(e) =>
-                    setCurrentPatient({ ...currentPatient, eventSummary: e.target.value })
-                  }
-                  placeholder="例如：The Seafood House 晚宴"
-                  required
-                />
-              </div>
-
               <div className="modal-actions">
                 <button type="button" onClick={() => setShowModal(false)} className="cancel-btn">
                   取消
                 </button>
                 <button type="submit" className="save-btn">
-                  儲存
+                  ✅ 儲存患者
                 </button>
               </div>
             </form>

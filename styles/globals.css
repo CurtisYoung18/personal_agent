@@ -1227,6 +1227,50 @@ body {
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
+/* 事件類型選擇 */
+.event-type-section {
+  margin-bottom: 16px;
+}
+
+.event-type-toggle {
+  display: flex;
+  gap: 12px;
+}
+
+.event-type-btn {
+  flex: 1;
+  padding: 12px 20px;
+  border: 2px solid #e2e8f0;
+  background: white;
+  color: #4a5568;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.event-type-btn:hover {
+  border-color: #cbd5e0;
+  background: #f7fafc;
+}
+
+.event-type-btn.active {
+  border-color: #4299e1;
+  background: linear-gradient(135deg, #4299e1 0%, #667eea 100%);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(66, 153, 225, 0.3);
+}
+
+.event-info-section {
+  margin-bottom: 16px;
+}
+
 .modal-actions {
   display: flex;
   gap: 12px;
