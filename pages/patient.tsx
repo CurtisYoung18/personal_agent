@@ -92,7 +92,7 @@ export default function PatientPage() {
         console.log('📋 原始患者信息:', patientInfo)
         
         // 處理用戶屬性：年齡轉為整數並添加單位，null 值使用 "please provide"
-        // 格式化案發時間為可讀格式
+        // 格式化案發時間為可讀格式（精確到天）
         const formatCaseTime = (datetime: string | null | undefined) => {
           if (!datetime) return 'please provide'
           try {
@@ -100,9 +100,7 @@ export default function PatientPage() {
             const year = date.getFullYear()
             const month = String(date.getMonth() + 1).padStart(2, '0')
             const day = String(date.getDate()).padStart(2, '0')
-            const hours = String(date.getHours()).padStart(2, '0')
-            const minutes = String(date.getMinutes()).padStart(2, '0')
-            return `${year}年${month}月${day}日 ${hours}:${minutes}`
+            return `${year}年${month}月${day}日`
           } catch {
             return 'please provide'
           }
