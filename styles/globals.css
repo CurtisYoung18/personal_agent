@@ -501,6 +501,37 @@ body {
   font-weight: 300;
 }
 
+.patient-page-header .header-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.patient-page-header .timer-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 8px;
+  white-space: nowrap;
+}
+
+.patient-page-header .timer-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.patient-page-header .timer-time {
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 0.5px;
+}
+
 .patient-page-header .logout-btn {
   padding: 8px 16px;
   background: rgba(255, 255, 255, 0.2);
@@ -1360,6 +1391,23 @@ body {
   .patient-page-header .header-patient-info {
     font-size: 11px;
     gap: 8px;
+  }
+
+  .patient-page-header .header-actions {
+    gap: 8px;
+  }
+
+  .patient-page-header .timer-display {
+    padding: 6px 12px;
+    gap: 6px;
+  }
+
+  .patient-page-header .timer-icon {
+    font-size: 14px;
+  }
+
+  .patient-page-header .timer-time {
+    font-size: 12px;
   }
 
   .patient-page-header .logout-btn {

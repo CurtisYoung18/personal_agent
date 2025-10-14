@@ -28,6 +28,69 @@ export default function PatientPage() {
   const [showIframe, setShowIframe] = useState(false)
   const [initMessage, setInitMessage] = useState('')
   const hasInitialized = useRef(false)
+  
+  // 計時器狀態
+  const [elapsedTime, setElapsedTime] = useState(0)
+  const timerIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const timerStartTimeRef = useRef<number>(0)
+
+  // 計時器管理函數
+  const startTimer = () => {
+    const storageKey = `patient_timer_${id}`
+    const savedTime = localStorage.getItem(storageKey)
+    const savedStartTime = localStorage.getItem(`${storageKey}_start`)
+    
+    if (savedTime && savedStartTime) {
+      // 恢復之前的計時
+      const previousElapsed = parseInt(savedTime, 10)
+      const startTime = parseInt(savedStartTime, 10)
+      const now = Date.now()
+      const currentElapsed = previousElapsed + Math.floor((now - startTime) / 1000)
+      setElapsedTime(currentElapsed)
+      timerStartTimeRef.current = now
+    } else {
+      // 開始新的計時
+      const now = Date.now()
+      timerStartTimeRef.current = now
+      localStorage.setItem(`${storageKey}_start`, now.toString())
+      setElapsedTime(0)
+    }
+    
+    // 啟動計時器
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current)
+    }
+    
+    timerIntervalRef.current = setInterval(() => {
+      setElapsedTime(prev => {
+        const newTime = prev + 1
+        localStorage.setItem(storageKey, newTime.toString())
+        return newTime
+      })
+    }, 1000)
+  }
+
+  const stopTimer = () => {
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current)
+      timerIntervalRef.current = null
+    }
+  }
+
+  const resetTimer = () => {
+    const storageKey = `patient_timer_${id}`
+    localStorage.removeItem(storageKey)
+    localStorage.removeItem(`${storageKey}_start`)
+    setElapsedTime(0)
+    stopTimer()
+  }
+
+  const formatTime = (seconds: number) => {
+    const hours = Math.floor(seconds / 3600)
+    const minutes = Math.floor((seconds % 3600) / 60)
+    const secs = seconds % 60
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+  }
 
   // Effect 1: 加載患者信息
   useEffect(() => {
@@ -188,9 +251,23 @@ export default function PatientPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showIframe])
 
+  // Effect 4: 啟動計時器（當 iframe 顯示後）
+  useEffect(() => {
+    if (showIframe && id) {
+      startTimer()
+    }
+    
+    // 清理函數
+    return () => {
+      stopTimer()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showIframe, id])
+
   // 處理登出
   const handleLogout = () => {
     if (confirm('確定要登出嗎？')) {
+      resetTimer()
       router.push('/')
     }
   }
@@ -254,9 +331,15 @@ export default function PatientPage() {
             </span>
           </div>
         </div>
-        <button onClick={handleLogout} className="logout-btn">
-          登出
-        </button>
+        <div className="header-actions">
+          <div className="timer-display">
+            <span className="timer-icon">⏱️</span>
+            <span className="timer-time">{formatTime(elapsedTime)}</span>
+          </div>
+          <button onClick={handleLogout} className="logout-btn">
+            登出
+          </button>
+        </div>
       </header>
 
       {/* iframe 容器（毛玻璃效果） */}
