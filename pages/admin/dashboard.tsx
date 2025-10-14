@@ -324,7 +324,7 @@ export default function AdminDashboard() {
                 <td className="email-cell">{patient.email || '-'}</td>
                 <td>{patient.occupation || '-'}</td>
                 <td className="case-number-cell">{patient.caseNumber || '-'}</td>
-                <td>{patient.eventDate || '-'}</td>
+                <td>{patient.eventDate ? patient.eventDate.split('T')[0] : '-'}</td>
                 <td className="location-cell">{patient.eventLocation || '-'}</td>
                 <td className="summary-cell">{patient.eventSummary || '-'}</td>
                 <td className="actions sticky-actions">

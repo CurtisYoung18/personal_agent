@@ -31,12 +31,9 @@ export default async function handler(
     const existingCount = parseInt(result.rows[0].count, 10)
     const nextNumber = existingCount + 1
     
-    // 生成事件简写（取事件摘要的首字母或关键词）
-    // 例如："The Seafood House 10月8日晚宴" => "SEAFOOD"
-    const eventKeyword = extractEventKeyword(event_summary)
-    
-    // 生成 case_id: HKHP_{EVENT}_{序号}
-    const caseId = `HKHP_${eventKeyword}_${nextNumber}`
+    // 直接使用事件详情作为 case_id 的中间部分
+    // 例如："The Seafood House 10月8日晚宴" => "HKHP_The Seafood House 10月8日晚宴_1"
+    const caseId = `HKHP_${event_summary}_${nextNumber}`
     
     console.log(`✅ 生成的 case_id: ${caseId} (現有患者: ${existingCount})`)
     
@@ -53,24 +50,5 @@ export default async function handler(
       message: '生成案例編號失敗',
     })
   }
-}
-
-// 提取事件关键词
-function extractEventKeyword(eventSummary: string): string {
-  // 尝试提取餐厅名或关键词
-  // 优先匹配英文大写词
-  const englishMatch = eventSummary.match(/[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*/)
-  if (englishMatch) {
-    return englishMatch[0].replace(/\s+/g, '').toUpperCase().substring(0, 10)
-  }
-  
-  // 如果没有英文，使用日期
-  const dateMatch = eventSummary.match(/(\d+)月(\d+)日/)
-  if (dateMatch) {
-    return `${dateMatch[1].padStart(2, '0')}${dateMatch[2].padStart(2, '0')}`
-  }
-  
-  // 默认使用事件的前几个字符
-  return 'EVENT'
 }
 

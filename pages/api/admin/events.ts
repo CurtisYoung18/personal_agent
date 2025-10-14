@@ -17,11 +17,23 @@ export default async function handler(
       `
       console.log(`✅ Admin: 找到 ${result.rows.length} 個不同的事件`)
       
-      const events = result.rows.map((row: any) => ({
-        date: row.event_date,
-        location: row.event_location || '',
-        summary: row.event_summary,
-      }))
+      const events = result.rows.map((row: any) => {
+        // 格式化日期为 YYYY-MM-DD，去掉时间戳
+        let formattedDate = row.event_date
+        if (row.event_date) {
+          const dateObj = new Date(row.event_date)
+          const year = dateObj.getFullYear()
+          const month = String(dateObj.getMonth() + 1).padStart(2, '0')
+          const day = String(dateObj.getDate()).padStart(2, '0')
+          formattedDate = `${year}-${month}-${day}`
+        }
+        
+        return {
+          date: formattedDate,
+          location: row.event_location || '',
+          summary: row.event_summary,
+        }
+      })
 
       return res.status(200).json({
         success: true,
