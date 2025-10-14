@@ -1,130 +1,99 @@
-import { NextApiRequest, NextApiResponse } from 'next';
+import { NextApiRequest, NextApiResponse } from 'next'
 
-// 創建對話的 API 端點
+// 发送消息到 GPTBots（streaming）
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ success: false, message: 'Method not allowed' });
+    return res.status(405).json({ success: false, message: 'Method not allowed' })
   }
 
-  const { userId, message } = req.body;
+  const { conversationId, message } = req.body
 
-  if (!userId || !message) {
-    return res.status(400).json({ success: false, message: 'Missing userId or message' });
-  }
-
-  const GPTBOTS_API_KEY = process.env.GPTBOTS_API_KEY;
-  const GPTBOTS_ENDPOINT = process.env.GPTBOTS_ENDPOINT || 'sg';
-
-  if (!GPTBOTS_API_KEY) {
-    console.warn('⚠️ GPTBOTS_API_KEY is not set. Running in local mode.');
-    // 本地模式：返回模擬回复
-    return res.status(200).json({ 
-      success: true, 
-      response: '您好！歡迎參與本次訪談，我將協助您完成問卷調查。',
-      mode: 'local'
-    });
+  if (!conversationId || !message) {
+    return res.status(400).json({
+      success: false,
+      message: '缺少對話 ID 或消息內容',
+    })
   }
 
   try {
-    // Step 1: 創建對話
-    console.log('📤 創建對話 for user:', userId);
-    console.log('🔑 Using API Key:', GPTBOTS_API_KEY ? `${GPTBOTS_API_KEY.substring(0, 10)}...` : 'NOT SET');
-    console.log('🌐 Endpoint:', GPTBOTS_ENDPOINT);
-    
-    const createConversationResponse = await fetch(
-      `https://api-${GPTBOTS_ENDPOINT}.gptbots.ai/v1/conversation`,
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${GPTBOTS_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          user_id: userId,
-        }),
-      }
-    );
-
-    const conversationData = await createConversationResponse.json();
-    
-    console.log('📥 創建對話響應:', conversationData);
-
-    if (!createConversationResponse.ok || !conversationData.conversation_id) {
-      console.error('❌ 創建對話失敗:', {
-        status: createConversationResponse.status,
-        statusText: createConversationResponse.statusText,
-        data: conversationData
-      });
-      throw new Error(`Failed to create conversation: ${JSON.stringify(conversationData)}`);
+    const apiKey = process.env.GPTBOTS_API_KEY
+    if (!apiKey) {
+      throw new Error('GPTBOTS_API_KEY not configured')
     }
 
-    const conversationId = conversationData.conversation_id;
-    console.log('✅ 對話已創建:', conversationId);
+    // 调用 GPTBots API 发送消息（streaming）
+    const response = await fetch('https://api-sg.gptbots.ai/v2/conversation/message', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        conversation_id: conversationId,
+        response_mode: 'streaming',
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: message,
+              },
+            ],
+          },
+        ],
+      }),
+    })
 
-    // Step 2: 發送消息
-    console.log('📤 發送消息:', message);
-    const sendMessageResponse = await fetch(
-      `https://api-${GPTBOTS_ENDPOINT}.gptbots.ai/v2/conversation/message`,
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${GPTBOTS_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          conversation_id: conversationId,
-          response_mode: 'blocking',
-          messages: [
-            {
-              role: 'user',
-              content: [
-                {
-                  type: 'text',
-                  text: message,
-                }
-              ],
-            },
-          ],
-        }),
-      }
-    );
-
-    const messageData = await sendMessageResponse.json();
-    
-    console.log('📥 發送消息響應:', messageData);
-
-    if (!sendMessageResponse.ok) {
-      console.error('❌ 發送消息失敗:', messageData);
-      throw new Error('Failed to send message');
+    if (!response.ok) {
+      const errorData = await response.json()
+      console.error('GPTBots API Error:', errorData)
+      return res.status(response.status).json({
+        success: false,
+        message: errorData.message || '發送消息失敗',
+      })
     }
 
-    // 提取 AI 的回复
-    let aiResponse = '';
-    if (messageData.output && messageData.output.length > 0) {
-      const firstOutput = messageData.output[0];
-      if (firstOutput.content && firstOutput.content.text) {
-        aiResponse = firstOutput.content.text;
-      }
+    // 设置 SSE headers
+    res.setHeader('Content-Type', 'text/event-stream')
+    res.setHeader('Cache-Control', 'no-cache')
+    res.setHeader('Connection', 'keep-alive')
+
+    // 流式传输响应
+    const reader = response.body?.getReader()
+    const decoder = new TextDecoder()
+
+    if (!reader) {
+      throw new Error('No response body')
     }
 
-    console.log('✅ AI 回复:', aiResponse);
+    try {
+      while (true) {
+        const { done, value } = await reader.read()
+        
+        if (done) {
+          break
+        }
 
-    return res.status(200).json({
-      success: true,
-      response: aiResponse,
-      conversation_id: conversationId,
-      message_id: messageData.message_id,
-    });
+        const chunk = decoder.decode(value, { stream: true })
+        res.write(chunk)
+      }
+    } finally {
+      reader.releaseLock()
+    }
+
+    res.end()
   } catch (error) {
-    console.error('❌ Error in conversation API:', error);
-    return res.status(500).json({ 
-      success: false, 
-      message: 'Server error during conversation',
-      error: error instanceof Error ? error.message : 'Unknown error'
-    });
+    console.error('Send message error:', error)
+    
+    if (!res.headersSent) {
+      return res.status(500).json({
+        success: false,
+        message: '伺服器錯誤，請稍後重試',
+      })
+    }
   }
 }
-

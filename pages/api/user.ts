@@ -14,47 +14,35 @@ export default async function handler(
   if (!id || typeof id !== 'string') {
     return res.status(400).json({
       success: false,
-      message: '缺少患者 ID',
+      message: '缺少用戶 ID',
     })
   }
 
   try {
     // 使用真實數據庫查詢
     const result = await sql`
-      SELECT id, case_number, name, email, phone, age, gender, occupation,
-             event_location, event_date, event_summary,
-             symptoms, food_history, notes
-      FROM patients
+      SELECT id, account, name, last_login
+      FROM users
       WHERE id = ${id}
       LIMIT 1
     `
     
-    const patient = result.rows.length > 0 ? result.rows[0] : null
+    const user = result.rows.length > 0 ? result.rows[0] : null
 
-    if (!patient) {
+    if (!user) {
       return res.status(404).json({
         success: false,
-        message: '未找到患者資訊',
+        message: '未找到用戶資訊',
       })
     }
 
     return res.status(200).json({
       success: true,
-      patient: {
-        id: patient.id.toString(),
-        caseNumber: patient.case_number,
-        name: patient.name,
-        email: patient.email,
-        phone: patient.phone,
-        age: patient.age,
-        gender: patient.gender,
-        occupation: patient.occupation,
-        eventLocation: patient.event_location,
-        eventDate: patient.event_date,
-        eventSummary: patient.event_summary,
-        symptoms: patient.symptoms,
-        foodHistory: patient.food_history,
-        notes: patient.notes,
+      user: {
+        id: user.id.toString(),
+        account: user.account,
+        name: user.name,
+        lastLogin: user.last_login,
       },
     })
   } catch (error) {

@@ -9,57 +9,46 @@ export default async function handler(
     return res.status(405).json({ success: false, message: 'Method not allowed' })
   }
 
-  const { email, phone } = req.body
+  const { account, password } = req.body
 
-  // 至少需要提供手機號碼或郵箱其中之一
-  if (!phone && !email) {
+  // 必須提供帳號和密碼
+  if (!account || !password) {
     return res.status(400).json({
       success: false,
-      message: '請提供電話號碼或電郵地址',
+      message: '請提供帳號和密碼',
     })
   }
 
   try {
-    let patient: any = null
+    // 使用真實數據庫查詢
+    const result = await sql`
+      SELECT id, account, name FROM users
+      WHERE account = ${account} AND password = ${password}
+      LIMIT 1
+    `
+    
+    const user = result.rows.length > 0 ? result.rows[0] : null
 
-    // 使用真實數據庫查詢（郵箱不區分大小寫）
-    if (email && phone) {
-      // 如果同時提供了郵箱和手機號，兩者都要匹配
-      const result = await sql`
-        SELECT id FROM patients
-        WHERE LOWER(email) = LOWER(${email}) AND phone = ${phone}
-        LIMIT 1
-      `
-      patient = result.rows.length > 0 ? result.rows[0] : null
-    } else if (email) {
-      // 僅提供郵箱（不區分大小寫）
-      const result = await sql`
-        SELECT id FROM patients
-        WHERE LOWER(email) = LOWER(${email})
-        LIMIT 1
-      `
-      patient = result.rows.length > 0 ? result.rows[0] : null
-    } else {
-      // 僅提供手機號
-      const result = await sql`
-        SELECT id FROM patients
-        WHERE phone = ${phone}
-        LIMIT 1
-      `
-      patient = result.rows.length > 0 ? result.rows[0] : null
-    }
-
-    if (!patient) {
+    if (!user) {
       return res.status(401).json({
         success: false,
-        message: '電話號碼或電郵不正確',
+        message: '帳號或密碼不正確',
       })
     }
 
+    // 更新最後登入時間
+    await sql`
+      UPDATE users 
+      SET last_login = NOW() 
+      WHERE id = ${user.id}
+    `
+
     return res.status(200).json({
       success: true,
-      patientId: patient.id.toString(),
-      message: '驗證成功',
+      userId: user.id.toString(),
+      account: user.account,
+      name: user.name,
+      message: '登入成功',
     })
   } catch (error) {
     console.error('Verification error:', error)
