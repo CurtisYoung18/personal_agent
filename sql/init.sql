@@ -11,12 +11,11 @@ CREATE TABLE IF NOT EXISTS patients (
   
   -- 事件資訊
   event_location VARCHAR(255),                -- 用餐地點
-  event_date DATE,                            -- 用餐日期
+  event_date DATE,                            -- 用餐日期（也用於 case_time）
   event_summary TEXT,                         -- 事件總結（detail字段用）
   
   -- 症狀資訊
   symptoms JSONB,                             -- 症狀詳情（JSON格式）
-  onset_datetime TIMESTAMP,                   -- 病發時間
   
   -- 其他資訊
   food_history TEXT,                          -- 食物歷史
@@ -36,7 +35,7 @@ CREATE INDEX idx_event_date ON patients(event_date);
 INSERT INTO patients (
   case_number, name, email, phone, age, gender, occupation,
   event_location, event_date, event_summary,
-  symptoms, onset_datetime,
+  symptoms,
   food_history, notes
 ) VALUES (
   '20251010-001',
@@ -62,7 +61,6 @@ INSERT INTO patients (
     "rapid_heartbeat": false,
     "other": null
   }'::jsonb,
-  '2025-10-10 05:00:00',
   '9/10 晚餐：在家用餐；午餐：大快活；早餐：沒有進食
 8/10 晚餐：疑似問題餐；午餐：忘記；早餐：沒有進食
 7/10 晚餐：忘記；午餐：忘記；早餐：沒有進食',
@@ -71,12 +69,12 @@ INSERT INTO patients (
 );
 
 -- 案例2-6: 同席用餐者（待訪談）
-INSERT INTO patients (case_number, name, phone, email, age, gender, event_location, event_date, event_summary, onset_datetime) VALUES
-  ('20251010-002', 'Lam Lok', '97684471', NULL, 28, '男', '旺角彌敦道520號CDB Plaza 30樓The Seafood House', '2025-10-08', 'The Seafood House 10月8日晚宴', '2025-10-09 12:00:00'),
-  ('20251010-003', 'Pretty', '1', 'Dm_hito@dh.gov.hk', 25, '女', '旺角彌敦道520號CDB Plaza 30樓The Seafood House', '2025-10-08', 'The Seafood House 10月8日晚宴', '2025-10-09 08:30:00'),
-  ('20251010-004', 'Shaun Wun', '55418888', NULL, 32, '男', '旺角彌敦道520號CDB Plaza 30樓The Seafood House', '2025-10-08', 'The Seafood House 10月8日晚宴', '2025-10-09 15:00:00'),
-  ('20251010-005', '凌兆楷 Wilfred', '66837316', NULL, 29, '男', '旺角彌敦道520號CDB Plaza 30樓The Seafood House', '2025-10-08', 'The Seafood House 10月8日晚宴', '2025-10-09 10:30:00'),
-  ('20251010-006', 'Venus', '64740051', NULL, 26, '女', '旺角彌敦道520號CDB Plaza 30樓The Seafood House', '2025-10-08', 'The Seafood House 10月8日晚宴', '2025-10-09 14:00:00');
+INSERT INTO patients (case_number, name, phone, email, age, gender, event_location, event_date, event_summary) VALUES
+  ('20251010-002', 'Lam Lok', '97684471', NULL, 28, '男', '旺角彌敦道520號CDB Plaza 30樓The Seafood House', '2025-10-08', 'The Seafood House 10月8日晚宴'),
+  ('20251010-003', 'Pretty', '1', 'Dm_hito@dh.gov.hk', 25, '女', '旺角彌敦道520號CDB Plaza 30樓The Seafood House', '2025-10-08', 'The Seafood House 10月8日晚宴'),
+  ('20251010-004', 'Shaun Wun', '55418888', NULL, 32, '男', '旺角彌敦道520號CDB Plaza 30樓The Seafood House', '2025-10-08', 'The Seafood House 10月8日晚宴'),
+  ('20251010-005', '凌兆楷 Wilfred', '66837316', NULL, 29, '男', '旺角彌敦道520號CDB Plaza 30樓The Seafood House', '2025-10-08', 'The Seafood House 10月8日晚宴'),
+  ('20251010-006', 'Venus', '64740051', NULL, 26, '女', '旺角彌敦道520號CDB Plaza 30樓The Seafood House', '2025-10-08', 'The Seafood House 10月8日晚宴');
 
 -- 說明：
 -- 1. 這個 SQL 腳本用於初始化 Vercel Postgres 數據庫
