@@ -1,25 +1,27 @@
--- Personal Agent 用戶認證表
+-- Personal Agent 用户认证表
 CREATE TABLE IF NOT EXISTS users (
   id SERIAL PRIMARY KEY,
-  account VARCHAR(100) UNIQUE NOT NULL,       -- 帳號（唯一）
-  password VARCHAR(255) NOT NULL,             -- 密碼
-  name VARCHAR(100),                          -- 用戶名稱（可選）
+  account VARCHAR(100) UNIQUE NOT NULL,       -- 账号（唯一）
+  password VARCHAR(255) NOT NULL,             -- 密码
+  name VARCHAR(100),                          -- 用户名称（可选）
+  avatar_url VARCHAR(500),                    -- 头像 URL（可选，默认使用 4k_5.png）
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  last_login TIMESTAMP                        -- 最後登入時間
+  last_login TIMESTAMP                        -- 最后登入时间
 );
 
--- 創建索引以提高查詢性能
+-- 创建索引以提高查询性能
 CREATE INDEX idx_account ON users(account);
 
--- 插入默認測試帳號
--- 密碼都是 "password123"（實際部署時請使用加密）
-INSERT INTO users (account, password, name) VALUES
-  ('admin', 'admin123', 'Curtis');
+-- 插入默认测试账号
+-- 密码都是 "password123"（实际部署时请使用加密）
+INSERT INTO users (account, password, name, avatar_url) VALUES
+  ('admin', 'admin123', 'Curtis', '/imgs/4k_5.png');
 
--- 說明：
--- 1. 這個 SQL 腳本用於初始化 Vercel Postgres 數據庫
--- 2. 部署到 Vercel 後，您需要在 Vercel 控制台中運行這個腳本
--- 3. 或者使用 Vercel Postgres 的 Query 功能直接執行
--- 4. 實際部署時，密碼應該使用 bcrypt 或其他加密方式存儲
+-- 说明：
+-- 1. 这个 SQL 脚本用于初始化 Vercel Postgres 数据库
+-- 2. 部署到 Vercel 后，您需要在 Vercel 控制台中运行这个脚本
+-- 3. 或者使用 Vercel Postgres 的 Query 功能直接执行
+-- 4. 实际部署时，密码应该使用 bcrypt 或其他加密方式存储
+-- 5. avatar_url 存储头像路径，可以是本地路径(/imgs/xxx.png)或外部 URL
 

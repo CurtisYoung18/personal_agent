@@ -7,6 +7,7 @@ interface UserInfo {
   id: string
   account: string
   name: string | null
+  avatar_url?: string
   lastLogin: string | null
 }
 
@@ -15,6 +16,11 @@ interface Message {
   role: 'user' | 'assistant'
   content: string
   timestamp: number
+  images?: Array<{
+    base64: string
+    format: string
+    name: string
+  }>
 }
 
 export default function ChatPage() {
@@ -27,7 +33,9 @@ export default function ChatPage() {
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [isStreaming, setIsStreaming] = useState(false)
+  const [uploadedImages, setUploadedImages] = useState<Array<{base64: string, format: string, name: string}>>([])
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   
   // 計時器狀態
   const [elapsedTime, setElapsedTime] = useState(0)
@@ -98,27 +106,41 @@ export default function ChatPage() {
     scrollToBottom()
   }, [messages])
 
-  // 加載用戶信息並創建對話
+  // 加载用户信息并创建对话
   useEffect(() => {
     if (!id) {
       router.push('/')
       return
     }
 
+    // 检查是否有登录标记（从登录页跳转过来）
+    const isFromLogin = sessionStorage.getItem('logged_in')
+    if (!isFromLogin) {
+      console.warn('⚠️ 未检测到登录状态，返回登录页')
+      router.push('/')
+      return
+    }
+
+    // 防止 React StrictMode 双重运行
+    let isMounted = true
+
     const initChat = async () => {
       try {
-        // 1. 獲取用戶信息
+        // 1. 获取用户信息
         const userResponse = await fetch(`/api/user?id=${id}`)
         const userData = await userResponse.json()
 
+        if (!isMounted) return // 如果组件已卸载，不继续执行
+
         if (!userResponse.ok || !userData.success) {
+          sessionStorage.removeItem('logged_in')
           router.push('/')
           return
         }
 
         setUserInfo(userData.user)
 
-        // 2. 創建對話
+        // 2. 创建对话
         const convResponse = await fetch('/api/conversation/create', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -127,22 +149,32 @@ export default function ChatPage() {
 
         const convData = await convResponse.json()
 
+        if (!isMounted) return // 如果组件已卸载，不继续执行
+
         if (convResponse.ok && convData.success) {
           setConversationId(convData.conversationId)
-          console.log('✅ 對話創建成功:', convData.conversationId)
         } else {
-          throw new Error(convData.message || '創建對話失敗')
+          throw new Error(convData.message || '创建对话失败')
         }
       } catch (err) {
-        console.error('初始化失敗:', err)
-        alert('初始化失敗，請重試')
+        if (!isMounted) return
+        console.error('❌ 初始化失败:', err)
+        sessionStorage.removeItem('logged_in')
+        alert('初始化失败，请重试')
         router.push('/')
       } finally {
-        setLoading(false)
+        if (isMounted) {
+          setLoading(false)
+        }
       }
     }
 
     initChat()
+    
+    // 清理函数
+    return () => {
+      isMounted = false
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
 
@@ -158,9 +190,9 @@ export default function ChatPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, id])
 
-  // 處理發送消息
+  // 处理发送消息（streaming 模式）
   const handleSendMessage = async () => {
-    if (!inputMessage.trim() || sending || !conversationId) return
+    if (!inputMessage.trim() || sending || !userInfo) return
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -174,7 +206,7 @@ export default function ChatPage() {
     setSending(true)
     setIsStreaming(true)
 
-    // 創建臨時的 AI 消息
+    // 创建临时的 AI 消息
     const aiMessageId = (Date.now() + 1).toString()
     const aiMessage: Message = {
       id: aiMessageId,
@@ -189,81 +221,65 @@ export default function ChatPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          conversationId,
+          conversationId: conversationId || undefined,
+          userId: userInfo.account,
           message: userMessage.content,
         }),
       })
 
       if (!response.ok) {
-        throw new Error('發送失敗')
+        throw new Error(`HTTP error! status: ${response.status}`)
       }
 
-      // 处理 SSE 流
+      // 处理 SSE 流式响应
       const reader = response.body?.getReader()
       const decoder = new TextDecoder()
+      let fullContent = ''
+      let receivedConversationId = ''
 
       if (!reader) {
-        throw new Error('无法读取响应')
+        throw new Error('无法读取响应流')
       }
-
-      let accumulatedText = ''
-      let chunkCount = 0
 
       while (true) {
         const { done, value } = await reader.read()
         
-        if (done) {
-          console.log(`✅ 流式传输完成，共收到 ${chunkCount} 个数据块`)
-          break
-        }
+        if (done) break
 
         const chunk = decoder.decode(value, { stream: true })
-        chunkCount++
-        console.log(`📦 收到数据块 #${chunkCount}:`, chunk.substring(0, 100))
-        
-        const lines = chunk.split('\n')
+        const lines = chunk.split('\n').filter(line => line.trim())
 
         for (const line of lines) {
-          if (!line.trim()) continue
+          // 移除 'data:' 前缀（如果有）
+          let data = line.trim()
+          if (data.startsWith('data:')) {
+            data = data.slice(5).trim()
+          }
           
+          if (data === '[DONE]') continue
+          
+          if (!data) continue
+
           try {
-            const data = JSON.parse(line)
-            console.log('📝 解析数据:', data)
+            const json = JSON.parse(data)
             
-            // 检查不同的响应格式
-            if (data.code === 3 && data.data) {
-              // 文本消息
-              accumulatedText += data.data
+            if (json.code === 3 && json.message === 'Text' && json.data) {
+              fullContent += json.data
               setMessages(prev => 
                 prev.map(msg => 
                   msg.id === aiMessageId 
-                    ? { ...msg, content: accumulatedText }
-                    : msg
-                )
-              )
-            } else if (data.code === 0) {
-              // 结束标记
-              console.log('✅ 收到结束标记')
-            } else if (data.event === 'message' && data.data) {
-              // 另一种可能的格式
-              accumulatedText += data.data
-              setMessages(prev => 
-                prev.map(msg => 
-                  msg.id === aiMessageId 
-                    ? { ...msg, content: accumulatedText }
+                    ? { ...msg, content: fullContent }
                     : msg
                 )
               )
             }
-          } catch (e) {
-            console.error('❌ JSON 解析错误:', e, '原始内容:', line)
+          } catch (parseError) {
+            // 忽略解析错误
           }
         }
       }
-      
-      // 如果没有收到任何内容，显示错误
-      if (accumulatedText === '') {
-        console.warn('⚠️ 未收到任何 AI 回复内容')
+
+      if (!fullContent) {
         setMessages(prev => 
           prev.map(msg => 
             msg.id === aiMessageId 
@@ -286,7 +302,18 @@ export default function ChatPage() {
   // 处理登出
   const handleLogout = () => {
     if (confirm('确定要登出吗？')) {
+      // 清除 sessionStorage 登录标记
+      sessionStorage.removeItem('logged_in')
+      sessionStorage.removeItem('user_id')
+      
+      // 清除 localStorage 保存的自动登录信息
+      localStorage.removeItem('saved_user_id')
+      localStorage.removeItem('saved_account')
+      console.log('✅ 已清除所有登录信息')
+      
+      // 停止计时器
       resetTimer()
+      // 返回登录页
       router.push('/')
     }
   }
@@ -315,8 +342,16 @@ export default function ChatPage() {
 
   return (
     <div className="chat-page fade-in">
-      {/* 顶部导航栏 - 仅保留登出按钮 */}
+      {/* 顶部导航栏 - 用户信息 + 登出 */}
       <header className="chat-page-header-minimal">
+        <div className="header-user-profile">
+          <img 
+            src={userInfo.avatar_url || '/imgs/4k_5.png'} 
+            alt="User" 
+            className="user-profile-avatar" 
+          />
+          <span className="user-profile-name">{userInfo.name || userInfo.account}</span>
+        </div>
         <button onClick={handleLogout} className="logout-btn-minimal">
           登出
         </button>
@@ -335,10 +370,20 @@ export default function ChatPage() {
           {messages.map((msg) => (
             <div key={msg.id} className={`message ${msg.role}`}>
               <div className="message-avatar">
-                {msg.role === 'user' ? '👤' : '🤖'}
+                {msg.role === 'user' ? (
+                  <img 
+                    src={userInfo.avatar_url || '/imgs/4k_5.png'} 
+                    alt="User" 
+                    className="avatar-img" 
+                  />
+                ) : (
+                  <img src="/imgs/bg_4.avif" alt="Bot" className="avatar-img" />
+                )}
               </div>
               <div className="message-content">
-                <div className="message-text">{msg.content}</div>
+                {msg.content !== '' && (
+                  <div className="message-text">{msg.content}</div>
+                )}
                 {msg.role === 'assistant' && msg.content === '' && isStreaming && (
                   <div className="typing-indicator">
                     <span></span>

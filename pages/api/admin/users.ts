@@ -9,7 +9,7 @@ export default async function handler(
     // GET - 获取所有用户
     if (req.method === 'GET') {
       const result = await sql`
-        SELECT id, account, name, created_at, last_login
+        SELECT id, account, name, avatar_url, created_at, last_login
         FROM users
         ORDER BY id ASC
       `
@@ -22,7 +22,7 @@ export default async function handler(
 
     // POST - 添加新用户
     if (req.method === 'POST') {
-      const { account, password, name } = req.body
+      const { account, password, name, avatar_url } = req.body
 
       if (!account || !password) {
         return res.status(400).json({
@@ -45,9 +45,9 @@ export default async function handler(
 
       // 插入新用户
       const result = await sql`
-        INSERT INTO users (account, password, name)
-        VALUES (${account}, ${password}, ${name || null})
-        RETURNING id, account, name
+        INSERT INTO users (account, password, name, avatar_url)
+        VALUES (${account}, ${password}, ${name || null}, ${avatar_url || null})
+        RETURNING id, account, name, avatar_url
       `
 
       return res.status(201).json({
@@ -61,15 +61,23 @@ export default async function handler(
     if (req.method === 'DELETE') {
       const { id } = req.query
 
-      if (!id) {
+      if (!id || typeof id !== 'string') {
         return res.status(400).json({
           success: false,
           message: '缺少用户 ID',
         })
       }
 
+      const userId = parseInt(id, 10)
+      if (isNaN(userId)) {
+        return res.status(400).json({
+          success: false,
+          message: '无效的用户 ID',
+        })
+      }
+
       await sql`
-        DELETE FROM users WHERE id = ${id}
+        DELETE FROM users WHERE id = ${userId}
       `
 
       return res.status(200).json({

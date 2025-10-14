@@ -1,4 +1,4 @@
-import { useState, FormEvent } from 'react'
+import { useState, useEffect, FormEvent } from 'react'
 import { useRouter } from 'next/router'
 import { HiUser, HiLockClosed, HiArrowLeft, HiCheckCircle } from 'react-icons/hi'
 import { BiLoaderAlt } from 'react-icons/bi'
@@ -10,6 +10,31 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [showLoginForm, setShowLoginForm] = useState(false)
+  const [rememberMe, setRememberMe] = useState(false)
+  const [checkingAuth, setCheckingAuth] = useState(true)
+
+  // 检查是否有保存的登录信息
+  useEffect(() => {
+    let hasRun = false // 防止 React StrictMode 双重运行
+    
+    const checkAuth = () => {
+      if (hasRun) return
+      hasRun = true
+      
+      const savedUserId = localStorage.getItem('saved_user_id')
+      const savedAccount = localStorage.getItem('saved_account')
+      
+      if (savedUserId && savedAccount) {
+        sessionStorage.setItem('logged_in', 'true')
+        sessionStorage.setItem('user_id', savedUserId)
+        router.push(`/chat?id=${savedUserId}`)
+      } else {
+        setCheckingAuth(false)
+      }
+    }
+    
+    checkAuth()
+  }, [router])
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -28,7 +53,19 @@ export default function LoginPage() {
       const data = await response.json()
 
       if (response.ok && data.success) {
-        // 验证成功，跳转到聊天页面
+        // 验证成功，设置登录标记
+        sessionStorage.setItem('logged_in', 'true')
+        sessionStorage.setItem('user_id', data.userId)
+        
+               if (rememberMe) {
+                 localStorage.setItem('saved_user_id', data.userId)
+                 localStorage.setItem('saved_account', account)
+               } else {
+                 localStorage.removeItem('saved_user_id')
+                 localStorage.removeItem('saved_account')
+               }
+        
+        // 跳转到聊天页面
         router.push(`/chat?id=${data.userId}`)
       } else {
         setError(data.message || '登录失败，请检查您的账号和密码')
@@ -38,6 +75,18 @@ export default function LoginPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  // 如果正在检查认证，显示加载状态
+  if (checkingAuth) {
+    return (
+      <div className="page-container">
+        <div className="checking-auth-container">
+          <BiLoaderAlt className="spinner-icon-large" />
+          <p>检查登录状态...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -118,6 +167,19 @@ export default function LoginPage() {
                   required
                   autoComplete="current-password"
                 />
+              </div>
+
+              {/* 记住我复选框 */}
+              <div className="remember-me-container">
+                <label className="remember-me-label">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    disabled={loading}
+                  />
+                  <span className="checkbox-text">记住我（下次自动登录）</span>
+                </label>
               </div>
 
               {error && <div className="error-message">{error}</div>}
