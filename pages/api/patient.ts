@@ -23,7 +23,7 @@ export default async function handler(
     const result = await sql`
       SELECT id, case_number, name, email, phone, age, gender, occupation,
              event_location, event_date, event_summary,
-             symptoms, onset_datetime, food_history, notes
+             symptoms, food_history, notes
       FROM patients
       WHERE id = ${id}
       LIMIT 1
@@ -53,7 +53,6 @@ export default async function handler(
         eventDate: patient.event_date,
         eventSummary: patient.event_summary,
         symptoms: patient.symptoms,
-        onsetDatetime: patient.onset_datetime,
         foodHistory: patient.food_history,
         notes: patient.notes,
       },

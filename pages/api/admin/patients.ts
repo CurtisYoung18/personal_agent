@@ -12,7 +12,7 @@ export default async function handler(
       const result = await sql`
         SELECT id, case_number, name, email, phone, age, gender, occupation, 
                event_location, event_date, event_summary, symptoms, 
-               onset_datetime, food_history, notes
+               food_history, notes
         FROM patients
         ORDER BY id ASC
       `
@@ -31,7 +31,6 @@ export default async function handler(
         event_date: row.event_date,
         event_summary: row.event_summary,
         symptoms: row.symptoms,
-        onset_datetime: row.onset_datetime,
         food_history: row.food_history,
         notes: row.notes,
       }))
@@ -55,7 +54,7 @@ export default async function handler(
     const { 
       case_number, name, email, phone, age, gender, occupation,
       event_location, event_date, event_summary, symptoms, 
-      onset_datetime, food_history, notes 
+      food_history, notes 
     } = req.body
 
     if (!name || !phone) {
@@ -70,14 +69,14 @@ export default async function handler(
         INSERT INTO patients (
           case_number, name, email, phone, age, gender, occupation,
           event_location, event_date, event_summary, symptoms,
-          onset_datetime, food_history, notes
+          food_history, notes
         )
         VALUES (
           ${case_number || null}, ${name}, ${email || null}, ${phone}, 
           ${age || null}, ${gender || null}, ${occupation || null},
           ${event_location || null}, ${event_date || null}, ${event_summary || null},
           ${symptoms ? JSON.stringify(symptoms) : null},
-          ${onset_datetime || null}, ${food_history || null}, ${notes || null}
+          ${food_history || null}, ${notes || null}
         )
       `
 
@@ -99,7 +98,7 @@ export default async function handler(
     const { 
       id, case_number, name, email, phone, age, gender, occupation,
       event_location, event_date, event_summary, symptoms,
-      onset_datetime, food_history, notes
+      food_history, notes
     } = req.body
 
     if (!id) {
@@ -123,7 +122,6 @@ export default async function handler(
             event_date = ${event_date || null},
             event_summary = ${event_summary || null},
             symptoms = ${symptoms ? JSON.stringify(symptoms) : null},
-            onset_datetime = ${onset_datetime || null},
             food_history = ${food_history || null},
             notes = ${notes || null},
             updated_at = CURRENT_TIMESTAMP
