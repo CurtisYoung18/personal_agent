@@ -2,6 +2,8 @@ import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/router'
 import { HiPaperAirplane, HiRefresh } from 'react-icons/hi'
 import { BiLoaderAlt } from 'react-icons/bi'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 interface UserInfo {
   id: string
@@ -34,6 +36,7 @@ export default function ChatPage() {
   const [sending, setSending] = useState(false)
   const [isStreaming, setIsStreaming] = useState(false)
   const [uploadedImages, setUploadedImages] = useState<Array<{base64: string, format: string, name: string}>>([])
+  const [showWelcome, setShowWelcome] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   
@@ -165,6 +168,7 @@ export default function ChatPage() {
       } finally {
         if (isMounted) {
           setLoading(false)
+          setTimeout(() => setShowWelcome(true), 300)
         }
       }
     }
@@ -357,10 +361,24 @@ export default function ChatPage() {
         </button>
       </header>
 
+      {/* 欢迎动画 */}
+      {showWelcome && (
+        <div className={`welcome-overlay ${messages.length > 0 ? 'hide' : ''}`}>
+          <div className="welcome-content-animation">
+            <div className="welcome-avatar">
+              <img src={userInfo.avatar_url || '/imgs/4k_5.png'} alt="User" />
+            </div>
+            <h1 className="welcome-title">欢迎回来</h1>
+            <h2 className="welcome-username">{userInfo.name || userInfo.account}</h2>
+            <p className="welcome-subtitle">您的个人工作助手已准备就绪</p>
+          </div>
+        </div>
+      )}
+
       {/* 聊天容器 */}
       <div className="chat-container">
         <div className="chat-messages">
-          {messages.length === 0 && (
+          {messages.length === 0 && !showWelcome && (
             <div className="welcome-message">
               <h2>👋 您好，{userInfo.name || userInfo.account}！</h2>
               <p>我是您的个人工作助手，有什么可以帮到您的吗？</p>
@@ -382,7 +400,15 @@ export default function ChatPage() {
               </div>
               <div className="message-content">
                 {msg.content !== '' && (
-                  <div className="message-text">{msg.content}</div>
+                  <div className="message-text">
+                    {msg.role === 'assistant' ? (
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {msg.content}
+                      </ReactMarkdown>
+                    ) : (
+                      msg.content
+                    )}
+                  </div>
                 )}
                 {msg.role === 'assistant' && msg.content === '' && isStreaming && (
                   <div className="typing-indicator">

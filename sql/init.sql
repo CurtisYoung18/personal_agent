@@ -13,8 +13,7 @@ CREATE TABLE IF NOT EXISTS users (
 -- 创建索引以提高查询性能
 CREATE INDEX idx_account ON users(account);
 
--- 插入默认测试账号
--- 密码都是 "password123"（实际部署时请使用加密）
+
 INSERT INTO users (account, password, name, avatar_url) VALUES
   ('admin', 'admin123', 'Curtis', '/imgs/4k_5.png');
 
