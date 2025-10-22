@@ -678,43 +678,37 @@ export default function AdminDashboard() {
             <h1>🔐 用户管理后台</h1>
             <p>Personal Agent - Admin Dashboard</p>
           </div>
-          <div className="header-right">
-            <div className="user-badge">{account}</div>
-            <button className="btn-logout" onClick={handleLogout}>
-              登出
-            </button>
-          </div>
+          <button className="btn-logout" onClick={handleLogout}>
+            登出
+          </button>
         </header>
-
-        {/* 统计卡片 */}
-        <div className="stats-grid">
-          <div className="stat-card">
-            <div className="stat-icon stat-icon-primary">👥</div>
-            <div className="stat-content">
-              <div className="stat-label">总用户数</div>
-              <div className="stat-value">{users.length}</div>
-            </div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-icon stat-icon-success">✓</div>
-            <div className="stat-content">
-              <div className="stat-label">活跃用户</div>
-              <div className="stat-value">{users.filter(u => u.last_login).length}</div>
-            </div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-icon stat-icon-info">🔍</div>
-            <div className="stat-content">
-              <div className="stat-label">搜索结果</div>
-              <div className="stat-value">{filteredUsers.length}</div>
-            </div>
-          </div>
-        </div>
 
         {error && <div className="error-banner">{error}</div>}
 
         <div className="admin-actions">
-          <div className="search-box">
+          <button 
+            className="btn-primary"
+            onClick={() => {
+              setShowAddForm(!showAddForm)
+              if (!showAddForm) setEditingUser(null)
+            }}
+          >
+            {showAddForm ? '✕ 取消' : '➕ 添加新用户'}
+          </button>
+          <button 
+            className="btn-secondary"
+            onClick={() => {
+              fetchUsers()
+              showToast('数据已刷新', 'info')
+            }}
+          >
+            🔄 刷新
+          </button>
+        </div>
+
+        {/* 搜索栏 */}
+        {users.length > 0 && (
+          <div className="search-bar">
             <span className="search-icon">🔍</span>
             <input
               type="text"
@@ -728,26 +722,11 @@ export default function AdminDashboard() {
                 ✕
               </button>
             )}
+            <span className="search-result-hint">
+              找到 {filteredUsers.length} / {users.length} 个用户
+            </span>
           </div>
-          <button 
-            className="btn-primary"
-            onClick={() => {
-              setShowAddForm(!showAddForm)
-              if (!showAddForm) setEditingUser(null)
-            }}
-          >
-            {showAddForm ? '取消' : '➕ 添加新用户'}
-          </button>
-          <button 
-            className="btn-secondary"
-            onClick={() => {
-              fetchUsers()
-              showToast('数据已刷新', 'info')
-            }}
-          >
-            🔄 刷新
-          </button>
-        </div>
+        )}
 
         {showAddForm && (
           <div className="add-user-form">
@@ -1050,7 +1029,8 @@ export default function AdminDashboard() {
       <style jsx>{`
         .admin-page {
           min-height: 100vh;
-          background: #f5f7fa;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          padding: 20px;
           position: relative;
         }
 
@@ -1250,97 +1230,92 @@ export default function AdminDashboard() {
         }
 
         .admin-container {
-          max-width: 1200px;
+          max-width: 1300px;
           margin: 0 auto;
           background: white;
-          border-radius: 12px;
-          padding: 30px;
-          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+          border-radius: 16px;
+          padding: 0;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+          overflow: hidden;
         }
 
         .admin-header {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          padding: 32px 40px;
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 30px;
-          padding-bottom: 20px;
-          border-bottom: 2px solid #f0f0f0;
+          color: white;
         }
 
-        .admin-header > div {
-          flex: 1;
-        }
-
-        .admin-header h1 {
+        .header-left h1 {
           font-size: 32px;
-          color: #333;
-          margin: 0 0 10px 0;
+          font-weight: 700;
+          margin: 0 0 8px 0;
         }
 
-        .admin-header p {
-          color: #666;
+        .header-left p {
           margin: 0;
+          opacity: 0.95;
+          font-size: 15px;
         }
 
         .btn-logout {
-          padding: 10px 20px;
-          background: #ff4757;
+          padding: 12px 28px;
+          background: rgba(255, 255, 255, 0.25);
           color: white;
-          border: none;
-          border-radius: 8px;
-          font-size: 14px;
+          border: 2px solid rgba(255, 255, 255, 0.5);
+          border-radius: 10px;
+          font-size: 15px;
           font-weight: 600;
           cursor: pointer;
           transition: all 0.3s ease;
+          backdrop-filter: blur(10px);
         }
 
         .btn-logout:hover {
-          background: #ff3838;
+          background: white;
+          color: #667eea;
           transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(255, 255, 255, 0.3);
         }
 
         .error-banner {
           background: #fee;
           color: #c33;
-          padding: 15px;
-          border-radius: 8px;
-          margin-bottom: 20px;
+          padding: 16px 40px;
+          margin: 0;
           border-left: 4px solid #c33;
+          border-bottom: 1px solid #fcc;
         }
 
         .admin-actions {
-          background: white;
-          border-radius: 16px;
-          padding: 20px 24px;
+          padding: 24px 40px;
           display: flex;
           align-items: center;
-          gap: 16px;
-          margin-bottom: 24px;
-          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-          flex-wrap: wrap;
+          gap: 12px;
+          border-bottom: 1px solid #f0f0f0;
         }
 
-        .search-box {
-          flex: 1;
-          min-width: 300px;
-          position: relative;
+        .search-bar {
+          padding: 20px 40px;
+          border-bottom: 1px solid #f0f0f0;
           display: flex;
           align-items: center;
+          gap: 12px;
+          position: relative;
         }
 
         .search-icon {
-          position: absolute;
-          left: 16px;
           font-size: 18px;
           color: #999;
-          pointer-events: none;
         }
 
         .search-input {
-          width: 100%;
-          padding: 12px 48px 12px 48px;
+          flex: 1;
+          padding: 12px 16px;
           border: 2px solid #e5e7eb;
-          border-radius: 12px;
+          border-radius: 8px;
           font-size: 15px;
           transition: all 0.2s;
         }
@@ -1348,12 +1323,12 @@ export default function AdminDashboard() {
         .search-input:focus {
           outline: none;
           border-color: #667eea;
-          box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+          box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
         .clear-search {
           position: absolute;
-          right: 12px;
+          right: 60px;
           width: 24px;
           height: 24px;
           border: none;
@@ -1370,6 +1345,12 @@ export default function AdminDashboard() {
 
         .clear-search:hover {
           background: #d1d5db;
+        }
+
+        .search-result-hint {
+          font-size: 13px;
+          color: #999;
+          white-space: nowrap;
         }
 
         .btn-primary, .btn-secondary {
@@ -1402,11 +1383,10 @@ export default function AdminDashboard() {
         }
 
         .add-user-form {
-          background: #f9f9f9;
-          padding: 25px;
-          border-radius: 8px;
-          margin-bottom: 30px;
-          border: 2px solid #e0e0e0;
+          background: #f9fafb;
+          padding: 30px 40px;
+          margin: 0;
+          border-bottom: 1px solid #e5e7eb;
         }
 
         .add-user-form h3 {
@@ -1457,12 +1437,14 @@ export default function AdminDashboard() {
         }
 
         .users-table-container {
-          margin-top: 30px;
+          padding: 24px 40px 40px;
         }
 
         .users-table-container h2 {
-          margin: 0 0 15px 0;
-          color: #333;
+          margin: 0 0 20px 0;
+          color: #1a1a1a;
+          font-size: 20px;
+          font-weight: 600;
         }
 
         .users-table {
