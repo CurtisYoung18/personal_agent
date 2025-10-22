@@ -757,14 +757,19 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 999;
+  z-index: 50;
   animation: moveToTop 2s ease-in-out 1.2s forwards;
   transition: opacity 0.5s ease-out;
+  pointer-events: none;
 }
 
 .welcome-overlay.hide {
   opacity: 0;
   pointer-events: none;
+}
+
+.welcome-content-animation {
+  pointer-events: all;
 }
 
 @keyframes moveToTop {
@@ -2288,12 +2293,13 @@ body {
   -webkit-backdrop-filter: blur(30px) saturate(180%);
   box-shadow: 2px 0 30px rgba(0, 0, 0, 0.15), 
               inset -1px 0 0 rgba(255, 255, 255, 0.3);
-  z-index: 100;
+  z-index: 200;
   display: flex;
   flex-direction: column;
   animation: slideInLeft 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   border-right: 1px solid rgba(255, 255, 255, 0.2);
   transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: all;
 }
 
 @keyframes slideInLeft {
@@ -2311,7 +2317,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 24px 20px;
+  padding: 20px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.25);
   background: linear-gradient(180deg, 
     rgba(255, 255, 255, 0.15) 0%, 
