@@ -592,7 +592,7 @@ export default function ChatPage() {
       )}
 
       {/* 聊天容器 */}
-      <div className="chat-container">
+      <div className={`chat-container ${showHistory ? 'with-history' : ''}`}>
         <div className="chat-messages">
           {messages.length === 0 && !showWelcome && (
             <div className="welcome-message">
