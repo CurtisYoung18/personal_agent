@@ -169,7 +169,7 @@ export default function AdminDashboard() {
     }
   }
 
-  // 处理头像上传
+  // 处理头像上传（转换为 base64 直接存储到数据库）
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -181,9 +181,9 @@ export default function AdminDashboard() {
       return
     }
 
-    // 验证文件大小（10MB）
-    if (file.size > 10 * 1024 * 1024) {
-      alert('图片大小不能超过 10MB')
+    // 验证文件大小（2MB，base64 会增大约 33%）
+    if (file.size > 2 * 1024 * 1024) {
+      alert('图片大小不能超过 2MB（建议使用压缩后的图片）')
       return
     }
 
@@ -193,33 +193,17 @@ export default function AdminDashboard() {
     try {
       // 读取文件为 base64
       const reader = new FileReader()
-      reader.onload = async (event) => {
+      reader.onload = (event) => {
         const base64Image = event.target?.result as string
+        
+        // 设置预览
         setPreviewAvatar(base64Image)
-
-        // 上传到服务器
-        const response = await fetch('/api/upload-avatar', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            image: base64Image,
-            filename: file.name,
-          }),
-        })
-
-        const data = await response.json()
-
-        if (data.success) {
-          setNewUser({ ...newUser, avatar_url: data.avatarUrl })
-          console.log('✅ 头像上传成功:', data.avatarUrl)
-        } else {
-          setError(data.message || '头像上传失败')
-          setPreviewAvatar('')
-        }
-
+        
+        // 直接将 base64 设置为 avatar_url，存储到数据库
+        setNewUser({ ...newUser, avatar_url: base64Image })
+        
         setUploadingAvatar(false)
+        console.log('✅ 头像已转换为 base64，大小:', (base64Image.length / 1024).toFixed(2), 'KB')
       }
 
       reader.onerror = () => {
@@ -229,8 +213,20 @@ export default function AdminDashboard() {
 
       reader.readAsDataURL(file)
     } catch (err) {
-      setError('头像上传失败')
+      setError('头像处理失败')
       setUploadingAvatar(false)
+    }
+  }
+
+  // 处理头像 URL 输入（支持直接输入图片 URL）
+  const handleAvatarUrlChange = (url: string) => {
+    setNewUser({ ...newUser, avatar_url: url })
+    
+    // 实时预览 URL
+    if (url.trim()) {
+      setPreviewAvatar(url)
+    } else {
+      setPreviewAvatar('')
     }
   }
 
@@ -558,18 +554,69 @@ export default function AdminDashboard() {
                       <img 
                         src={previewAvatar || newUser.avatar_url} 
                         alt="头像预览" 
+                        onError={(e) => {
+                          e.currentTarget.src = '/imgs/4k_5.png'
+                          setError('图片加载失败，请检查 URL 是否有效')
+                        }}
                       />
                     </div>
                   )}
-                  <input
-                    type="file"
-                    accept=".png,.jpeg,.jpg,.webp,.gif"
-                    onChange={handleAvatarUpload}
-                    disabled={uploadingAvatar}
-                    style={{ marginTop: '10px' }}
-                  />
-                  {uploadingAvatar && <span className="uploading-text">上传中...</span>}
-                  <p className="helper-text">支持 PNG、JPEG、JPG、WEBP、GIF 格式，最大 10MB</p>
+                  
+                  <div className="avatar-input-tabs">
+                    <div className="tab-buttons">
+                      <button 
+                        type="button"
+                        className={`tab-btn ${!newUser.avatar_url.startsWith('http') ? 'active' : ''}`}
+                        onClick={() => {
+                          setNewUser({ ...newUser, avatar_url: '' })
+                          setPreviewAvatar('')
+                        }}
+                      >
+                        📁 上传本地图片
+                      </button>
+                      <button 
+                        type="button"
+                        className={`tab-btn ${newUser.avatar_url.startsWith('http') ? 'active' : ''}`}
+                        onClick={() => {
+                          setNewUser({ ...newUser, avatar_url: 'https://' })
+                          setPreviewAvatar('')
+                        }}
+                      >
+                        🔗 输入图片 URL
+                      </button>
+                    </div>
+
+                    {!newUser.avatar_url.startsWith('http') ? (
+                      <div className="upload-section">
+                        <input
+                          type="file"
+                          accept=".png,.jpeg,.jpg,.webp,.gif"
+                          onChange={handleAvatarUpload}
+                          disabled={uploadingAvatar}
+                          className="file-input"
+                        />
+                        {uploadingAvatar && <span className="uploading-text">处理中...</span>}
+                        <p className="helper-text">
+                          💡 支持 PNG、JPEG、JPG、WEBP、GIF 格式<br/>
+                          📦 最大 2MB（会转为 base64 存储到数据库）
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="url-input-section">
+                        <input
+                          type="url"
+                          value={newUser.avatar_url}
+                          onChange={(e) => handleAvatarUrlChange(e.target.value)}
+                          placeholder="https://example.com/avatar.png"
+                          className="url-input"
+                        />
+                        <p className="helper-text">
+                          💡 输入可访问的图片 URL，支持实时预览<br/>
+                          🌐 推荐使用 CDN 或图床链接
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
               <button type="submit" className="btn-submit" disabled={uploadingAvatar}>
@@ -860,16 +907,17 @@ export default function AdminDashboard() {
         .avatar-upload-container {
           display: flex;
           flex-direction: column;
-          gap: 10px;
+          gap: 15px;
         }
 
         .avatar-preview {
-          width: 80px;
-          height: 80px;
+          width: 100px;
+          height: 100px;
           border-radius: 50%;
           overflow: hidden;
           border: 3px solid #667eea;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+          box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+          margin: 0 auto;
         }
 
         .avatar-preview img {
@@ -878,16 +926,93 @@ export default function AdminDashboard() {
           object-fit: cover;
         }
 
+        .avatar-input-tabs {
+          display: flex;
+          flex-direction: column;
+          gap: 15px;
+        }
+
+        .tab-buttons {
+          display: flex;
+          gap: 10px;
+          border-bottom: 2px solid #e0e0e0;
+          padding-bottom: 10px;
+        }
+
+        .tab-btn {
+          flex: 1;
+          padding: 10px 15px;
+          background: #f5f5f5;
+          border: 2px solid #e0e0e0;
+          border-radius: 8px;
+          font-size: 14px;
+          font-weight: 600;
+          color: #666;
+          cursor: pointer;
+          transition: all 0.3s ease;
+        }
+
+        .tab-btn:hover {
+          background: #ebebeb;
+          border-color: #ccc;
+        }
+
+        .tab-btn.active {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          border-color: #667eea;
+          box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        }
+
+        .upload-section,
+        .url-input-section {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .file-input {
+          padding: 10px;
+          border: 2px dashed #ddd;
+          border-radius: 8px;
+          background: #fafafa;
+          cursor: pointer;
+          transition: all 0.3s ease;
+        }
+
+        .file-input:hover {
+          border-color: #667eea;
+          background: #f5f7ff;
+        }
+
+        .url-input {
+          width: 100%;
+          padding: 12px;
+          border: 2px solid #ddd;
+          border-radius: 8px;
+          font-size: 14px;
+          transition: all 0.3s ease;
+        }
+
+        .url-input:focus {
+          outline: none;
+          border-color: #667eea;
+          box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
         .uploading-text {
           color: #667eea;
           font-size: 14px;
           font-weight: 600;
+          text-align: center;
         }
 
         .helper-text {
           color: #999;
           font-size: 12px;
-          margin: 5px 0 0 0;
+          line-height: 1.6;
+          margin: 0;
+          text-align: center;
         }
 
         .user-avatar-cell {
