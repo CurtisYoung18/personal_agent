@@ -39,10 +39,8 @@ export default function ChatPage() {
   const [showWelcome, setShowWelcome] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  
-  // 滚动控制状态
-  const [isUserScrolling, setIsUserScrolling] = useState(false)
-  const [shouldAutoScroll, setShouldAutoScroll] = useState(true)
+  const isUserScrollingRef = useRef(false)
+  const shouldAutoScrollRef = useRef(true)
   
   // 計時器狀態
   const [elapsedTime, setElapsedTime] = useState(0)
@@ -106,17 +104,14 @@ export default function ChatPage() {
 
   // 自動滾動到最新消息
   const scrollToBottom = () => {
-    if (shouldAutoScroll) {
+    if (shouldAutoScrollRef.current && !isUserScrollingRef.current) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     }
   }
 
   useEffect(() => {
-    // 只有在用户没有手动滚动时才自动滚动
-    if (!isUserScrolling) {
-      scrollToBottom()
-    }
-  }, [messages, isUserScrolling])
+    scrollToBottom()
+  }, [messages])
 
   // 监听用户滚动行为
   useEffect(() => {
@@ -127,29 +122,32 @@ export default function ChatPage() {
 
     const handleScroll = () => {
       const { scrollTop, scrollHeight, clientHeight } = messagesContainer
-      const isAtBottom = scrollTop + clientHeight >= scrollHeight - 10 // 10px 容差
+      const isAtBottom = scrollTop + clientHeight >= scrollHeight - 50 // 50px 容差
       
       if (!isAtBottom) {
         // 用户不在底部，停止自动滚动
-        setIsUserScrolling(true)
-        setShouldAutoScroll(false)
+        isUserScrollingRef.current = true
+        shouldAutoScrollRef.current = false
+        console.log('🛑 用户向上滚动，停止自动滚动')
       } else {
         // 用户在底部，恢复自动滚动
-        setIsUserScrolling(false)
-        setShouldAutoScroll(true)
+        isUserScrollingRef.current = false
+        shouldAutoScrollRef.current = true
+        console.log('✅ 用户回到底部，恢复自动滚动')
       }
       
       clearTimeout(scrollTimeout)
       scrollTimeout = setTimeout(() => {
         // 用户停止滚动后，检查是否在底部
         const { scrollTop: newScrollTop, scrollHeight: newScrollHeight, clientHeight: newClientHeight } = messagesContainer
-        const isStillAtBottom = newScrollTop + newClientHeight >= newScrollHeight - 10
+        const isStillAtBottom = newScrollTop + newClientHeight >= newScrollHeight - 50
         
         if (isStillAtBottom) {
-          setIsUserScrolling(false)
-          setShouldAutoScroll(true)
+          isUserScrollingRef.current = false
+          shouldAutoScrollRef.current = true
+          console.log('✅ 用户停止滚动且在底部，恢复自动滚动')
         }
-      }, 500) // 用户停止滚动0.5秒后检查
+      }, 300) // 用户停止滚动0.3秒后检查
     }
 
     messagesContainer.addEventListener('scroll', handleScroll)
@@ -327,10 +325,6 @@ export default function ChatPage() {
                     : msg
                 )
               )
-              // 只有在用户没有手动滚动时才自动滚动
-              if (!isUserScrolling) {
-                scrollToBottom()
-              }
             }
           } catch (parseError) {
             // 忽略解析错误
