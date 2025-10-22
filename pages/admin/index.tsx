@@ -818,15 +818,28 @@ export default function AdminDashboard() {
                       </div>
                     ) : (
                       <div className="url-input-section">
-                        <input
-                          type="url"
-                          value={newUser.avatar_url}
-                          onChange={(e) => handleAvatarUrlChange(e.target.value)}
-                          placeholder="https://i.imgur.com/example.png"
-                          className="url-input"
-                        />
+                        <div className="url-input-group">
+                          <input
+                            type="url"
+                            value={newUser.avatar_url}
+                            onChange={(e) => setNewUser({ ...newUser, avatar_url: e.target.value })}
+                            placeholder="https://i.imgur.com/example.png"
+                            className="url-input"
+                          />
+                          <button 
+                            type="button"
+                            className="btn-check-url"
+                            onClick={() => {
+                              if (newUser.avatar_url && newUser.avatar_url !== 'https://') {
+                                setPreviewAvatar(newUser.avatar_url)
+                              }
+                            }}
+                          >
+                            ✓ 确认预览
+                          </button>
+                        </div>
                         <p className="helper-text">
-                          💡 输入可访问的图片 URL，支持实时预览<br/>
+                          💡 输入图片 URL 后点击"确认预览"按钮查看效果<br/>
                           🌐 推荐使用 Imgur、Cloudinary 等图床链接
                         </p>
                       </div>
@@ -931,15 +944,28 @@ export default function AdminDashboard() {
                       </div>
                     ) : (
                       <div className="url-input-section">
-                        <input
-                          type="url"
-                          value={editFormData.avatar_url}
-                          onChange={(e) => handleEditAvatarUrlChange(e.target.value)}
-                          placeholder="https://i.imgur.com/example.png"
-                          className="url-input"
-                        />
+                        <div className="url-input-group">
+                          <input
+                            type="url"
+                            value={editFormData.avatar_url}
+                            onChange={(e) => setEditFormData({ ...editFormData, avatar_url: e.target.value })}
+                            placeholder="https://i.imgur.com/example.png"
+                            className="url-input"
+                          />
+                          <button 
+                            type="button"
+                            className="btn-check-url"
+                            onClick={() => {
+                              if (editFormData.avatar_url && editFormData.avatar_url !== 'https://') {
+                                setEditPreviewAvatar(editFormData.avatar_url)
+                              }
+                            }}
+                          >
+                            ✓ 确认预览
+                          </button>
+                        </div>
                         <p className="helper-text">
-                          💡 输入可访问的图片 URL，支持实时预览<br/>
+                          💡 输入图片 URL 后点击"确认预览"按钮查看效果<br/>
                           🌐 推荐使用 Imgur、Cloudinary 等图床链接
                         </p>
                       </div>
@@ -1267,8 +1293,10 @@ export default function AdminDashboard() {
 
         .header-left p {
           margin: 0;
-          opacity: 0.95;
+          opacity: 1;
           font-size: 15px;
+          font-weight: 500;
+          text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
         }
 
         .btn-logout {
@@ -1362,8 +1390,12 @@ export default function AdminDashboard() {
 
         .search-result-hint {
           font-size: 13px;
-          color: #999;
+          color: #1a1a1a;
+          font-weight: 600;
           white-space: nowrap;
+          background: rgba(255, 255, 255, 0.7);
+          padding: 6px 12px;
+          border-radius: 6px;
         }
 
         .btn-primary, .btn-secondary {
@@ -1628,6 +1660,38 @@ export default function AdminDashboard() {
           display: flex;
           flex-direction: column;
           gap: 10px;
+        }
+
+        .url-input-group {
+          display: flex;
+          gap: 10px;
+          align-items: stretch;
+        }
+
+        .url-input-group .url-input {
+          flex: 1;
+        }
+
+        .btn-check-url {
+          padding: 10px 20px;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          border: none;
+          border-radius: 8px;
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          white-space: nowrap;
+        }
+
+        .btn-check-url:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-check-url:active {
+          transform: translateY(0);
         }
 
         .file-input {
