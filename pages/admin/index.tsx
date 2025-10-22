@@ -32,6 +32,15 @@ export default function AdminDashboard() {
   })
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [previewAvatar, setPreviewAvatar] = useState('')
+  
+  const [editingUser, setEditingUser] = useState<User | null>(null)
+  const [editFormData, setEditFormData] = useState({
+    account: '',
+    password: '',
+    name: '',
+    avatar_url: '',
+  })
+  const [editPreviewAvatar, setEditPreviewAvatar] = useState('')
 
   useEffect(() => {
     let hasRun = false
@@ -166,6 +175,115 @@ export default function AdminDashboard() {
       }
     } catch (err) {
       setError('网络错误，请稍后重试')
+    }
+  }
+
+  // 开始编辑用户
+  const startEditUser = (user: User) => {
+    setEditingUser(user)
+    setEditFormData({
+      account: user.account,
+      password: '', // 不显示原密码
+      name: user.name || '',
+      avatar_url: user.avatar_url || '',
+    })
+    setEditPreviewAvatar(user.avatar_url || '')
+    setShowAddForm(false) // 关闭添加表单
+  }
+
+  // 取消编辑
+  const cancelEdit = () => {
+    setEditingUser(null)
+    setEditFormData({
+      account: '',
+      password: '',
+      name: '',
+      avatar_url: '',
+    })
+    setEditPreviewAvatar('')
+  }
+
+  // 提交编辑
+  const handleEditUser = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+
+    if (!editingUser) return
+
+    try {
+      const response = await fetch('/api/admin/users', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: editingUser.id,
+          ...editFormData,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        alert('用户更新成功！')
+        cancelEdit()
+        fetchUsers()
+      } else {
+        setError(data.message || '更新用户失败')
+      }
+    } catch (err) {
+      setError('网络错误，请稍后重试')
+    }
+  }
+
+  // 处理编辑表单的头像上传
+  const handleEditAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif']
+    if (!validTypes.includes(file.type)) {
+      alert('仅支持 PNG、JPEG、JPG、WEBP、GIF 格式的图片')
+      return
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      alert('图片大小不能超过 2MB（建议使用压缩后的图片）')
+      return
+    }
+
+    setUploadingAvatar(true)
+    setError('')
+
+    try {
+      const reader = new FileReader()
+      reader.onload = (event) => {
+        const base64Image = event.target?.result as string
+        setEditPreviewAvatar(base64Image)
+        setEditFormData({ ...editFormData, avatar_url: base64Image })
+        setUploadingAvatar(false)
+        console.log('✅ 头像已转换为 base64，大小:', (base64Image.length / 1024).toFixed(2), 'KB')
+      }
+
+      reader.onerror = () => {
+        setError('读取文件失败')
+        setUploadingAvatar(false)
+      }
+
+      reader.readAsDataURL(file)
+    } catch (err) {
+      setError('头像处理失败')
+      setUploadingAvatar(false)
+    }
+  }
+
+  // 处理编辑表单的 URL 输入
+  const handleEditAvatarUrlChange = (url: string) => {
+    setEditFormData({ ...editFormData, avatar_url: url })
+    if (url.trim()) {
+      setEditPreviewAvatar(url)
+    } else {
+      setEditPreviewAvatar('')
     }
   }
 
@@ -578,7 +696,7 @@ export default function AdminDashboard() {
                         type="button"
                         className={`tab-btn ${newUser.avatar_url.startsWith('http') ? 'active' : ''}`}
                         onClick={() => {
-                          setNewUser({ ...newUser, avatar_url: 'https://' })
+                          setNewUser({ ...newUser, avatar_url: '' })
                           setPreviewAvatar('')
                         }}
                       >
@@ -607,12 +725,12 @@ export default function AdminDashboard() {
                           type="url"
                           value={newUser.avatar_url}
                           onChange={(e) => handleAvatarUrlChange(e.target.value)}
-                          placeholder="https://example.com/avatar.png"
+                          placeholder="https://i.imgur.com/example.png"
                           className="url-input"
                         />
                         <p className="helper-text">
                           💡 输入可访问的图片 URL，支持实时预览<br/>
-                          🌐 推荐使用 CDN 或图床链接
+                          🌐 推荐使用 Imgur、Cloudinary 等图床链接
                         </p>
                       </div>
                     )}
@@ -622,6 +740,124 @@ export default function AdminDashboard() {
               <button type="submit" className="btn-submit" disabled={uploadingAvatar}>
                 {uploadingAvatar ? '上传中...' : '添加用户'}
               </button>
+            </form>
+          </div>
+        )}
+
+        {/* 编辑用户表单 */}
+        {editingUser && (
+          <div className="add-user-form">
+            <h3>✏️ 编辑用户: {editingUser.account}</h3>
+            <form onSubmit={handleEditUser}>
+              <div className="form-group">
+                <label>账号 *</label>
+                <input
+                  type="text"
+                  required
+                  value={editFormData.account}
+                  onChange={(e) => setEditFormData({ ...editFormData, account: e.target.value })}
+                  placeholder="输入账号"
+                />
+              </div>
+              <div className="form-group">
+                <label>密码（留空则不修改）</label>
+                <input
+                  type="password"
+                  value={editFormData.password}
+                  onChange={(e) => setEditFormData({ ...editFormData, password: e.target.value })}
+                  placeholder="输入新密码（可选）"
+                />
+              </div>
+              <div className="form-group">
+                <label>姓名</label>
+                <input
+                  type="text"
+                  value={editFormData.name}
+                  onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                  placeholder="输入姓名（可选）"
+                />
+              </div>
+              <div className="form-group">
+                <label>用户头像</label>
+                <div className="avatar-upload-container">
+                  {(editPreviewAvatar || editFormData.avatar_url) && (
+                    <div className="avatar-preview">
+                      <img 
+                        src={editPreviewAvatar || editFormData.avatar_url} 
+                        alt="头像预览" 
+                        onError={(e) => {
+                          e.currentTarget.src = '/imgs/4k_5.png'
+                          setError('图片加载失败，请检查 URL 是否有效')
+                        }}
+                      />
+                    </div>
+                  )}
+                  
+                  <div className="avatar-input-tabs">
+                    <div className="tab-buttons">
+                      <button 
+                        type="button"
+                        className={`tab-btn ${!editFormData.avatar_url.startsWith('http') ? 'active' : ''}`}
+                        onClick={() => {
+                          setEditFormData({ ...editFormData, avatar_url: '' })
+                          setEditPreviewAvatar('')
+                        }}
+                      >
+                        📁 上传本地图片
+                      </button>
+                      <button 
+                        type="button"
+                        className={`tab-btn ${editFormData.avatar_url.startsWith('http') ? 'active' : ''}`}
+                        onClick={() => {
+                          setEditFormData({ ...editFormData, avatar_url: '' })
+                          setEditPreviewAvatar('')
+                        }}
+                      >
+                        🔗 输入图片 URL
+                      </button>
+                    </div>
+
+                    {!editFormData.avatar_url.startsWith('http') ? (
+                      <div className="upload-section">
+                        <input
+                          type="file"
+                          accept=".png,.jpeg,.jpg,.webp,.gif"
+                          onChange={handleEditAvatarUpload}
+                          disabled={uploadingAvatar}
+                          className="file-input"
+                        />
+                        {uploadingAvatar && <span className="uploading-text">处理中...</span>}
+                        <p className="helper-text">
+                          💡 支持 PNG、JPEG、JPG、WEBP、GIF 格式<br/>
+                          📦 最大 2MB（会转为 base64 存储到数据库）
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="url-input-section">
+                        <input
+                          type="url"
+                          value={editFormData.avatar_url}
+                          onChange={(e) => handleEditAvatarUrlChange(e.target.value)}
+                          placeholder="https://i.imgur.com/example.png"
+                          className="url-input"
+                        />
+                        <p className="helper-text">
+                          💡 输入可访问的图片 URL，支持实时预览<br/>
+                          🌐 推荐使用 Imgur、Cloudinary 等图床链接
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="form-actions">
+                <button type="submit" className="btn-submit" disabled={uploadingAvatar}>
+                  {uploadingAvatar ? '处理中...' : '保存修改'}
+                </button>
+                <button type="button" className="btn-cancel" onClick={cancelEdit}>
+                  取消
+                </button>
+              </div>
             </form>
           </div>
         )}
@@ -670,12 +906,20 @@ export default function AdminDashboard() {
                       }
                     </td>
                     <td>
-                      <button 
-                        className="btn-delete"
-                        onClick={() => handleDeleteUser(user.id)}
-                      >
-                        🗑️ 删除
-                      </button>
+                      <div className="action-buttons">
+                        <button 
+                          className="btn-edit"
+                          onClick={() => startEditUser(user)}
+                        >
+                          ✏️ 编辑
+                        </button>
+                        <button 
+                          className="btn-delete"
+                          onClick={() => handleDeleteUser(user.id)}
+                        >
+                          🗑️ 删除
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -881,6 +1125,28 @@ export default function AdminDashboard() {
           padding: 40px !important;
         }
 
+        .action-buttons {
+          display: flex;
+          gap: 8px;
+          justify-content: center;
+        }
+
+        .btn-edit {
+          background: #667eea;
+          color: white;
+          padding: 6px 12px;
+          border: none;
+          border-radius: 6px;
+          font-size: 12px;
+          cursor: pointer;
+          transition: all 0.3s ease;
+        }
+
+        .btn-edit:hover {
+          background: #5568d3;
+          transform: translateY(-1px);
+        }
+
         .btn-delete {
           background: #ff4757;
           color: white;
@@ -895,6 +1161,28 @@ export default function AdminDashboard() {
         .btn-delete:hover {
           background: #ff3838;
           transform: translateY(-1px);
+        }
+
+        .form-actions {
+          display: flex;
+          gap: 10px;
+          margin-top: 10px;
+        }
+
+        .btn-cancel {
+          background: #95a5a6;
+          color: white;
+          padding: 12px 30px;
+          border: none;
+          border-radius: 8px;
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+        }
+
+        .btn-cancel:hover {
+          background: #7f8c8d;
+          transform: translateY(-2px);
         }
 
         .loading {
