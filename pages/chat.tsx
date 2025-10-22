@@ -104,57 +104,92 @@ export default function ChatPage() {
 
   // 自動滾動到最新消息
   const scrollToBottom = () => {
+    console.log('📍 scrollToBottom 被调用 - shouldAutoScroll:', shouldAutoScrollRef.current, 'isUserScrolling:', isUserScrollingRef.current)
     if (shouldAutoScrollRef.current && !isUserScrollingRef.current) {
+      console.log('✅ 执行滚动到底部')
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    } else {
+      console.log('❌ 跳过滚动（用户正在查看历史消息）')
     }
   }
 
   useEffect(() => {
+    console.log('🔄 messages 更新，准备滚动...')
     scrollToBottom()
   }, [messages])
 
-  // 监听用户滚动行为
+  // 监听用户滚动行为（鼠标滚轮和触摸）
   useEffect(() => {
     const messagesContainer = document.querySelector('.chat-messages')
     if (!messagesContainer) return
 
     let scrollTimeout: NodeJS.Timeout
+    let userInteractionTimeout: NodeJS.Timeout
 
+    // 监听鼠标滚轮事件
+    const handleWheel = () => {
+      // 用户使用滚轮，立即停止自动滚动
+      isUserScrollingRef.current = true
+      shouldAutoScrollRef.current = false
+      console.log('🖱️ 检测到鼠标滚轮，停止自动滚动')
+      
+      // 3秒后检查是否在底部
+      clearTimeout(userInteractionTimeout)
+      userInteractionTimeout = setTimeout(() => {
+        const { scrollTop, scrollHeight, clientHeight } = messagesContainer
+        const isAtBottom = scrollTop + clientHeight >= scrollHeight - 100
+        
+        if (isAtBottom) {
+          isUserScrollingRef.current = false
+          shouldAutoScrollRef.current = true
+          console.log('✅ 用户回到底部，恢复自动滚动')
+        } else {
+          console.log('📍 用户仍在查看历史消息')
+        }
+      }, 3000)
+    }
+
+    // 监听触摸事件（移动端）
+    const handleTouchStart = () => {
+      isUserScrollingRef.current = true
+      shouldAutoScrollRef.current = false
+      console.log('👆 检测到触摸，停止自动滚动')
+    }
+
+    // 监听滚动事件（作为备用）
     const handleScroll = () => {
       const { scrollTop, scrollHeight, clientHeight } = messagesContainer
-      const isAtBottom = scrollTop + clientHeight >= scrollHeight - 50 // 50px 容差
+      const isAtBottom = scrollTop + clientHeight >= scrollHeight - 100
       
-      if (!isAtBottom) {
-        // 用户不在底部，停止自动滚动
+      if (!isAtBottom && !isUserScrollingRef.current) {
         isUserScrollingRef.current = true
         shouldAutoScrollRef.current = false
-        console.log('🛑 用户向上滚动，停止自动滚动')
-      } else {
-        // 用户在底部，恢复自动滚动
-        isUserScrollingRef.current = false
-        shouldAutoScrollRef.current = true
-        console.log('✅ 用户回到底部，恢复自动滚动')
+        console.log('📜 检测到滚动且不在底部，停止自动滚动')
       }
       
       clearTimeout(scrollTimeout)
       scrollTimeout = setTimeout(() => {
-        // 用户停止滚动后，检查是否在底部
         const { scrollTop: newScrollTop, scrollHeight: newScrollHeight, clientHeight: newClientHeight } = messagesContainer
-        const isStillAtBottom = newScrollTop + newClientHeight >= newScrollHeight - 50
+        const isStillAtBottom = newScrollTop + newClientHeight >= newScrollHeight - 100
         
         if (isStillAtBottom) {
           isUserScrollingRef.current = false
           shouldAutoScrollRef.current = true
-          console.log('✅ 用户停止滚动且在底部，恢复自动滚动')
+          console.log('✅ 检测到在底部，恢复自动滚动')
         }
-      }, 300) // 用户停止滚动0.3秒后检查
+      }, 2000)
     }
 
-    messagesContainer.addEventListener('scroll', handleScroll)
+    messagesContainer.addEventListener('wheel', handleWheel, { passive: true })
+    messagesContainer.addEventListener('touchstart', handleTouchStart, { passive: true })
+    messagesContainer.addEventListener('scroll', handleScroll, { passive: true })
     
     return () => {
+      messagesContainer.removeEventListener('wheel', handleWheel)
+      messagesContainer.removeEventListener('touchstart', handleTouchStart)
       messagesContainer.removeEventListener('scroll', handleScroll)
       clearTimeout(scrollTimeout)
+      clearTimeout(userInteractionTimeout)
     }
   }, [])
 
