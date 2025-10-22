@@ -40,6 +40,10 @@ export default function ChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   
+  // 滚动控制状态
+  const [isUserScrolling, setIsUserScrolling] = useState(false)
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(true)
+  
   // 計時器狀態
   const [elapsedTime, setElapsedTime] = useState(0)
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null)
@@ -102,12 +106,43 @@ export default function ChatPage() {
 
   // 自動滾動到最新消息
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if (shouldAutoScroll) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
   }
 
   useEffect(() => {
-    scrollToBottom()
-  }, [messages])
+    // 只有在用户没有手动滚动时才自动滚动
+    if (!isUserScrolling) {
+      scrollToBottom()
+    }
+  }, [messages, isUserScrolling])
+
+  // 监听用户滚动行为
+  useEffect(() => {
+    const messagesContainer = document.querySelector('.chat-messages')
+    if (!messagesContainer) return
+
+    let scrollTimeout: NodeJS.Timeout
+
+    const handleScroll = () => {
+      setIsUserScrolling(true)
+      setShouldAutoScroll(false)
+      
+      clearTimeout(scrollTimeout)
+      scrollTimeout = setTimeout(() => {
+        setIsUserScrolling(false)
+        setShouldAutoScroll(true)
+      }, 1000) // 用户停止滚动1秒后恢复自动滚动
+    }
+
+    messagesContainer.addEventListener('scroll', handleScroll)
+    
+    return () => {
+      messagesContainer.removeEventListener('scroll', handleScroll)
+      clearTimeout(scrollTimeout)
+    }
+  }, [])
 
   // 加载用户信息并创建对话
   useEffect(() => {
@@ -276,6 +311,10 @@ export default function ChatPage() {
                     : msg
                 )
               )
+              // 只有在用户没有手动滚动时才自动滚动
+              if (!isUserScrolling) {
+                scrollToBottom()
+              }
             }
           } catch (parseError) {
             // 忽略解析错误
