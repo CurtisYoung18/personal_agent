@@ -10,6 +10,12 @@ interface User {
   last_login: string | null
 }
 
+interface Toast {
+  id: number
+  message: string
+  type: 'success' | 'error' | 'info' | 'warning'
+}
+
 export default function AdminDashboard() {
   const router = useRouter()
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -20,8 +26,12 @@ export default function AdminDashboard() {
   const [showLoginForm, setShowLoginForm] = useState(false)
   const [checkingAuth, setCheckingAuth] = useState(true)
   const [users, setUsers] = useState<User[]>([])
+  const [filteredUsers, setFilteredUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [toasts, setToasts] = useState<Toast[]>([])
+  const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null)
   
   const [showAddForm, setShowAddForm] = useState(false)
   const [newUser, setNewUser] = useState({
@@ -41,6 +51,29 @@ export default function AdminDashboard() {
     avatar_url: '',
   })
   const [editPreviewAvatar, setEditPreviewAvatar] = useState('')
+
+  // Toast 通知系统
+  const showToast = (message: string, type: 'success' | 'error' | 'info' | 'warning' = 'info') => {
+    const id = Date.now()
+    setToasts(prev => [...prev, { id, message, type }])
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id))
+    }, 3500)
+  }
+
+  // 搜索功能
+  useEffect(() => {
+    if (searchQuery.trim() === '') {
+      setFilteredUsers(users)
+    } else {
+      const query = searchQuery.toLowerCase()
+      setFilteredUsers(users.filter(user => 
+        user.account.toLowerCase().includes(query) ||
+        (user.name && user.name.toLowerCase().includes(query)) ||
+        user.id.toString().includes(query)
+      ))
+    }
+  }, [searchQuery, users])
 
   useEffect(() => {
     let hasRun = false
@@ -118,6 +151,7 @@ export default function AdminDashboard() {
       
       if (data.success) {
         setUsers(data.users)
+        setFilteredUsers(data.users)
       } else {
         setError(data.message || '加载用户列表失败')
       }
@@ -144,22 +178,20 @@ export default function AdminDashboard() {
       const data = await response.json()
       
       if (data.success) {
-        alert('用户添加成功！')
+        showToast('用户添加成功！', 'success')
         setNewUser({ account: '', password: '', name: '', avatar_url: '' })
         setPreviewAvatar('')
         setShowAddForm(false)
         fetchUsers()
       } else {
-        setError(data.message || '添加用户失败')
+        showToast(data.message || '添加用户失败', 'error')
       }
     } catch (err) {
-      setError('网络错误，请稍后重试')
+      showToast('网络错误，请稍后重试', 'error')
     }
   }
 
   const handleDeleteUser = async (userId: number) => {
-    if (!confirm('确定要删除此用户吗？')) return
-    
     try {
       const response = await fetch(`/api/admin/users?id=${userId}`, {
         method: 'DELETE',
@@ -168,13 +200,14 @@ export default function AdminDashboard() {
       const data = await response.json()
       
       if (data.success) {
-        alert('用户删除成功！')
-        fetchUsers() // 刷新列表
+        showToast('用户删除成功！', 'success')
+        setDeleteConfirm(null)
+        fetchUsers()
       } else {
-        setError(data.message || '删除用户失败')
+        showToast(data.message || '删除用户失败', 'error')
       }
     } catch (err) {
-      setError('网络错误，请稍后重试')
+      showToast('网络错误，请稍后重试', 'error')
     }
   }
 
@@ -225,14 +258,14 @@ export default function AdminDashboard() {
       const data = await response.json()
 
       if (data.success) {
-        alert('用户更新成功！')
+        showToast('用户更新成功！', 'success')
         cancelEdit()
         fetchUsers()
       } else {
-        setError(data.message || '更新用户失败')
+        showToast(data.message || '更新用户失败', 'error')
       }
     } catch (err) {
-      setError('网络错误，请稍后重试')
+      showToast('网络错误，请稍后重试', 'error')
     }
   }
 
@@ -605,27 +638,112 @@ export default function AdminDashboard() {
 
   return (
     <div className="admin-page">
+      {/* Toast 通知容器 */}
+      <div className="toast-container">
+        {toasts.map(toast => (
+          <div key={toast.id} className={`toast toast-${toast.type}`}>
+            <span className="toast-icon">
+              {toast.type === 'success' && '✓'}
+              {toast.type === 'error' && '✕'}
+              {toast.type === 'info' && 'ℹ'}
+              {toast.type === 'warning' && '⚠'}
+            </span>
+            <span className="toast-message">{toast.message}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* 删除确认对话框 */}
+      {deleteConfirm !== null && (
+        <div className="modal-overlay" onClick={() => setDeleteConfirm(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-icon modal-icon-danger">⚠️</div>
+            <h3>确认删除用户？</h3>
+            <p>此操作无法撤销，该用户的所有数据将被永久删除。</p>
+            <div className="modal-actions">
+              <button className="btn-modal btn-modal-cancel" onClick={() => setDeleteConfirm(null)}>
+                取消
+              </button>
+              <button className="btn-modal btn-modal-danger" onClick={() => handleDeleteUser(deleteConfirm)}>
+                确认删除
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="admin-container">
         <header className="admin-header">
-          <h1>🔐 用户管理后台</h1>
-          <p>Personal Agent - Admin Dashboard</p>
-          <button className="btn-logout" onClick={handleLogout}>
-            登出
-          </button>
+          <div className="header-left">
+            <h1>🔐 用户管理后台</h1>
+            <p>Personal Agent - Admin Dashboard</p>
+          </div>
+          <div className="header-right">
+            <div className="user-badge">{account}</div>
+            <button className="btn-logout" onClick={handleLogout}>
+              登出
+            </button>
+          </div>
         </header>
+
+        {/* 统计卡片 */}
+        <div className="stats-grid">
+          <div className="stat-card">
+            <div className="stat-icon stat-icon-primary">👥</div>
+            <div className="stat-content">
+              <div className="stat-label">总用户数</div>
+              <div className="stat-value">{users.length}</div>
+            </div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-icon stat-icon-success">✓</div>
+            <div className="stat-content">
+              <div className="stat-label">活跃用户</div>
+              <div className="stat-value">{users.filter(u => u.last_login).length}</div>
+            </div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-icon stat-icon-info">🔍</div>
+            <div className="stat-content">
+              <div className="stat-label">搜索结果</div>
+              <div className="stat-value">{filteredUsers.length}</div>
+            </div>
+          </div>
+        </div>
 
         {error && <div className="error-banner">{error}</div>}
 
         <div className="admin-actions">
+          <div className="search-box">
+            <span className="search-icon">🔍</span>
+            <input
+              type="text"
+              placeholder="搜索用户（ID、账号或姓名）..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="search-input"
+            />
+            {searchQuery && (
+              <button className="clear-search" onClick={() => setSearchQuery('')}>
+                ✕
+              </button>
+            )}
+          </div>
           <button 
             className="btn-primary"
-            onClick={() => setShowAddForm(!showAddForm)}
+            onClick={() => {
+              setShowAddForm(!showAddForm)
+              if (!showAddForm) setEditingUser(null)
+            }}
           >
             {showAddForm ? '取消' : '➕ 添加新用户'}
           </button>
           <button 
             className="btn-secondary"
-            onClick={fetchUsers}
+            onClick={() => {
+              fetchUsers()
+              showToast('数据已刷新', 'info')
+            }}
           >
             🔄 刷新
           </button>
@@ -877,14 +995,14 @@ export default function AdminDashboard() {
               </tr>
             </thead>
             <tbody>
-              {users.length === 0 ? (
+              {filteredUsers.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="empty-state">
-                    暂无用户数据，请添加用户
+                    {searchQuery ? '未找到匹配的用户' : '暂无用户数据，请添加用户'}
                   </td>
                 </tr>
               ) : (
-                users.map((user) => (
+                filteredUsers.map((user) => (
                   <tr key={user.id}>
                     <td>{user.id}</td>
                     <td>
@@ -915,7 +1033,7 @@ export default function AdminDashboard() {
                         </button>
                         <button 
                           className="btn-delete"
-                          onClick={() => handleDeleteUser(user.id)}
+                          onClick={() => setDeleteConfirm(user.id)}
                         >
                           🗑️ 删除
                         </button>
@@ -932,8 +1050,203 @@ export default function AdminDashboard() {
       <style jsx>{`
         .admin-page {
           min-height: 100vh;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          padding: 20px;
+          background: #f5f7fa;
+          position: relative;
+        }
+
+        /* Toast 通知系统 */
+        .toast-container {
+          position: fixed;
+          top: 24px;
+          right: 24px;
+          z-index: 9999;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          max-width: 400px;
+        }
+
+        .toast {
+          background: white;
+          padding: 16px 20px;
+          border-radius: 12px;
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          font-size: 14px;
+          font-weight: 500;
+          animation: slideIn 0.3s ease-out;
+          border-left: 4px solid #3b82f6;
+        }
+
+        @keyframes slideIn {
+          from {
+            opacity: 0;
+            transform: translateX(100px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+
+        .toast-icon {
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 14px;
+          color: white;
+          flex-shrink: 0;
+        }
+
+        .toast-success {
+          border-left-color: #10b981;
+        }
+
+        .toast-success .toast-icon {
+          background: #10b981;
+        }
+
+        .toast-error {
+          border-left-color: #ef4444;
+        }
+
+        .toast-error .toast-icon {
+          background: #ef4444;
+        }
+
+        .toast-info {
+          border-left-color: #3b82f6;
+        }
+
+        .toast-info .toast-icon {
+          background: #3b82f6;
+        }
+
+        .toast-warning {
+          border-left-color: #f59e0b;
+        }
+
+        .toast-warning .toast-icon {
+          background: #f59e0b;
+        }
+
+        .toast-message {
+          flex: 1;
+          color: #1f2937;
+        }
+
+        /* 模态框 */
+        .modal-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.6);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 9998;
+          animation: fadeIn 0.2s;
+          backdrop-filter: blur(4px);
+        }
+
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        .modal-content {
+          background: white;
+          border-radius: 20px;
+          padding: 32px;
+          max-width: 440px;
+          width: calc(100% - 48px);
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+          animation: scaleIn 0.3s ease-out;
+          text-align: center;
+        }
+
+        @keyframes scaleIn {
+          from {
+            opacity: 0;
+            transform: scale(0.9);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+
+        .modal-icon {
+          width: 64px;
+          height: 64px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 32px;
+          margin: 0 auto 20px;
+        }
+
+        .modal-icon-danger {
+          background: #fee;
+          color: #ef4444;
+        }
+
+        .modal-content h3 {
+          margin: 0 0 12px 0;
+          font-size: 22px;
+          font-weight: 600;
+          color: #1a1a1a;
+        }
+
+        .modal-content p {
+          margin: 0 0 24px 0;
+          color: #666;
+          font-size: 15px;
+          line-height: 1.6;
+        }
+
+        .modal-actions {
+          display: flex;
+          gap: 12px;
+        }
+
+        .btn-modal {
+          flex: 1;
+          padding: 12px 24px;
+          border: none;
+          border-radius: 10px;
+          font-size: 15px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .btn-modal-cancel {
+          background: #f3f4f6;
+          color: #666;
+        }
+
+        .btn-modal-cancel:hover {
+          background: #e5e7eb;
+        }
+
+        .btn-modal-danger {
+          background: #ef4444;
+          color: white;
+        }
+
+        .btn-modal-danger:hover {
+          background: #dc2626;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
         }
 
         .admin-container {
@@ -996,9 +1309,67 @@ export default function AdminDashboard() {
         }
 
         .admin-actions {
+          background: white;
+          border-radius: 16px;
+          padding: 20px 24px;
           display: flex;
-          gap: 10px;
-          margin-bottom: 20px;
+          align-items: center;
+          gap: 16px;
+          margin-bottom: 24px;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+          flex-wrap: wrap;
+        }
+
+        .search-box {
+          flex: 1;
+          min-width: 300px;
+          position: relative;
+          display: flex;
+          align-items: center;
+        }
+
+        .search-icon {
+          position: absolute;
+          left: 16px;
+          font-size: 18px;
+          color: #999;
+          pointer-events: none;
+        }
+
+        .search-input {
+          width: 100%;
+          padding: 12px 48px 12px 48px;
+          border: 2px solid #e5e7eb;
+          border-radius: 12px;
+          font-size: 15px;
+          transition: all 0.2s;
+        }
+
+        .search-input:focus {
+          outline: none;
+          border-color: #667eea;
+          box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+
+        .clear-search {
+          position: absolute;
+          right: 12px;
+          width: 24px;
+          height: 24px;
+          border: none;
+          background: #e5e7eb;
+          border-radius: 50%;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 12px;
+          color: #666;
+          transition: all 0.2s;
+        }
+
+        .clear-search:hover {
+          background: #d1d5db;
         }
 
         .btn-primary, .btn-secondary {
