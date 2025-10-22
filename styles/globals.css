@@ -533,6 +533,13 @@ body {
   backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
   flex-shrink: 0;
+  position: relative;
+  z-index: 100;
+  transition: margin-left 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.chat-page-header-minimal.with-history {
+  margin-left: 340px;
 }
 
 .header-user-profile {
@@ -2282,8 +2289,9 @@ body {
 .history-sidebar {
   position: fixed;
   left: 0;
-  top: 70px;
+  top: 0;
   bottom: 0;
+  height: 100vh;
   width: 340px;
   background: linear-gradient(135deg, 
     rgba(173, 216, 230, 0.25) 0%, 
@@ -2293,7 +2301,7 @@ body {
   -webkit-backdrop-filter: blur(30px) saturate(180%);
   box-shadow: 2px 0 30px rgba(0, 0, 0, 0.15), 
               inset -1px 0 0 rgba(255, 255, 255, 0.3);
-  z-index: 200;
+  z-index: 1000;
   display: flex;
   flex-direction: column;
   animation: slideInLeft 0.5s cubic-bezier(0.4, 0, 0.2, 1);
@@ -2317,11 +2325,13 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px;
+  height: 70px;
+  padding: 0 20px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.25);
   background: linear-gradient(180deg, 
     rgba(255, 255, 255, 0.15) 0%, 
     rgba(255, 255, 255, 0.05) 100%);
+  flex-shrink: 0;
 }
 
 .history-header h3 {

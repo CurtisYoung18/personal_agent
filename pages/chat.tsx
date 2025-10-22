@@ -507,7 +507,7 @@ export default function ChatPage() {
   return (
     <div className="chat-page fade-in">
       {/* 顶部导航栏 - 用户信息 + 登出 */}
-      <header className="chat-page-header-minimal">
+      <header className={`chat-page-header-minimal ${showHistory ? 'with-history' : ''}`}>
         <div className="header-user-profile">
           <button 
             onClick={() => {
