@@ -25,6 +25,17 @@ interface Message {
   }>
 }
 
+interface ConversationItem {
+  conversation_id: string
+  user_id: string
+  recent_chat_time: number
+  subject: string
+  conversation_type: string
+  message_count: number
+  cost_credit: number
+  bot_id: string
+}
+
 export default function ChatPage() {
   const router = useRouter()
   const { id } = router.query
@@ -37,6 +48,9 @@ export default function ChatPage() {
   const [isStreaming, setIsStreaming] = useState(false)
   const [uploadedImages, setUploadedImages] = useState<Array<{base64: string, format: string, name: string}>>([])
   const [showWelcome, setShowWelcome] = useState(false)
+  const [showHistory, setShowHistory] = useState(false)
+  const [conversationList, setConversationList] = useState<ConversationItem[]>([])
+  const [loadingHistory, setLoadingHistory] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const isUserScrollingRef = useRef(false)
@@ -104,17 +118,12 @@ export default function ChatPage() {
 
   // 自動滾動到最新消息
   const scrollToBottom = () => {
-    console.log('📍 scrollToBottom 被调用 - shouldAutoScroll:', shouldAutoScrollRef.current, 'isUserScrolling:', isUserScrollingRef.current)
     if (shouldAutoScrollRef.current && !isUserScrollingRef.current) {
-      console.log('✅ 执行滚动到底部')
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-    } else {
-      console.log('❌ 跳过滚动（用户正在查看历史消息）')
     }
   }
 
   useEffect(() => {
-    console.log('🔄 messages 更新，准备滚动...')
     scrollToBottom()
   }, [messages])
 
@@ -128,12 +137,9 @@ export default function ChatPage() {
 
     // 监听鼠标滚轮事件
     const handleWheel = () => {
-      // 用户使用滚轮，立即停止自动滚动
       isUserScrollingRef.current = true
       shouldAutoScrollRef.current = false
-      console.log('🖱️ 检测到鼠标滚轮，停止自动滚动')
       
-      // 3秒后检查是否在底部
       clearTimeout(userInteractionTimeout)
       userInteractionTimeout = setTimeout(() => {
         const { scrollTop, scrollHeight, clientHeight } = messagesContainer
@@ -142,9 +148,6 @@ export default function ChatPage() {
         if (isAtBottom) {
           isUserScrollingRef.current = false
           shouldAutoScrollRef.current = true
-          console.log('✅ 用户回到底部，恢复自动滚动')
-        } else {
-          console.log('📍 用户仍在查看历史消息')
         }
       }, 3000)
     }
@@ -153,7 +156,6 @@ export default function ChatPage() {
     const handleTouchStart = () => {
       isUserScrollingRef.current = true
       shouldAutoScrollRef.current = false
-      console.log('👆 检测到触摸，停止自动滚动')
     }
 
     // 监听滚动事件（作为备用）
@@ -164,7 +166,6 @@ export default function ChatPage() {
       if (!isAtBottom && !isUserScrollingRef.current) {
         isUserScrollingRef.current = true
         shouldAutoScrollRef.current = false
-        console.log('📜 检测到滚动且不在底部，停止自动滚动')
       }
       
       clearTimeout(scrollTimeout)
@@ -175,7 +176,6 @@ export default function ChatPage() {
         if (isStillAtBottom) {
           isUserScrollingRef.current = false
           shouldAutoScrollRef.current = true
-          console.log('✅ 检测到在底部，恢复自动滚动')
         }
       }, 2000)
     }
@@ -277,6 +277,82 @@ export default function ChatPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, id])
+
+  // 获取历史对话列表
+  const fetchConversationList = async () => {
+    if (!userInfo) return
+    
+    setLoadingHistory(true)
+    try {
+      const response = await fetch(`/api/conversation/list?userId=${userInfo.account}&page=1&pageSize=50`)
+      const data = await response.json()
+      
+      if (data.success) {
+        setConversationList(data.list || [])
+      } else {
+        console.error('获取历史对话失败:', data.message)
+      }
+    } catch (error) {
+      console.error('获取历史对话错误:', error)
+    } finally {
+      setLoadingHistory(false)
+    }
+  }
+
+  // 加载历史对话消息
+  const loadHistoryMessages = async (convId: string) => {
+    try {
+      const response = await fetch(`/api/conversation/messages?conversationId=${convId}&page=1&pageSize=100`)
+      const data = await response.json()
+      
+      if (data.success) {
+        // 转换消息格式
+        const historyMessages: Message[] = []
+        data.messages.forEach((msg: any) => {
+          if (msg.role === 'user') {
+            // 用户消息
+            msg.content.forEach((contentItem: any) => {
+              contentItem.branch_content?.forEach((branch: any) => {
+                if (branch.type === 'text') {
+                  historyMessages.push({
+                    id: msg.message_id,
+                    role: 'user',
+                    content: branch.text || '',
+                    timestamp: msg.create_time
+                  })
+                }
+              })
+            })
+          } else if (msg.role === 'assistant') {
+            // AI消息
+            let combinedText = ''
+            msg.content.forEach((contentItem: any) => {
+              contentItem.branch_content?.forEach((branch: any) => {
+                if (branch.type === 'text') {
+                  combinedText += branch.text || ''
+                }
+              })
+            })
+            if (combinedText) {
+              historyMessages.push({
+                id: msg.message_id,
+                role: 'assistant',
+                content: combinedText,
+                timestamp: msg.create_time
+              })
+            }
+          }
+        })
+        
+        setMessages(historyMessages)
+        setConversationId(convId)
+        setShowHistory(false)
+      }
+    } catch (error) {
+      console.error('加载历史消息错误:', error)
+      alert('加载历史对话失败')
+    }
+  }
 
   // 处理发送消息（streaming 模式）
   const handleSendMessage = async () => {
@@ -433,6 +509,18 @@ export default function ChatPage() {
       {/* 顶部导航栏 - 用户信息 + 登出 */}
       <header className="chat-page-header-minimal">
         <div className="header-user-profile">
+          <button 
+            onClick={() => {
+              setShowHistory(!showHistory)
+              if (!showHistory && conversationList.length === 0) {
+                fetchConversationList()
+              }
+            }} 
+            className="history-btn"
+            title="历史对话"
+          >
+            📜
+          </button>
           <img 
             src={userInfo.avatar_url || '/imgs/4k_5.png'} 
             alt="User" 
@@ -444,6 +532,46 @@ export default function ChatPage() {
           登出
         </button>
       </header>
+
+      {/* 历史对话侧边栏 */}
+      {showHistory && (
+        <div className="history-sidebar">
+          <div className="history-header">
+            <h3>历史对话</h3>
+            <button onClick={() => setShowHistory(false)} className="close-history-btn">
+              ✕
+            </button>
+          </div>
+          <div className="history-list">
+            {loadingHistory ? (
+              <div className="history-loading">加载中...</div>
+            ) : conversationList.length === 0 ? (
+              <div className="history-empty">暂无历史对话</div>
+            ) : (
+              conversationList.map((conv) => (
+                <div 
+                  key={conv.conversation_id} 
+                  className={`history-item ${conv.conversation_id === conversationId ? 'active' : ''}`}
+                  onClick={() => loadHistoryMessages(conv.conversation_id)}
+                >
+                  <div className="history-item-subject">{conv.subject || '新对话'}</div>
+                  <div className="history-item-info">
+                    <span className="history-item-time">
+                      {new Date(conv.recent_chat_time).toLocaleString('zh-CN', {
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </span>
+                    <span className="history-item-count">{conv.message_count} 条消息</span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
 
       {/* 欢迎动画 */}
       {showWelcome && (
