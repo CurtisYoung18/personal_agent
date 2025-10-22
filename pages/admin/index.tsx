@@ -793,7 +793,7 @@ export default function AdminDashboard() {
                         type="button"
                         className={`tab-btn ${newUser.avatar_url.startsWith('http') ? 'active' : ''}`}
                         onClick={() => {
-                          setNewUser({ ...newUser, avatar_url: '' })
+                          setNewUser({ ...newUser, avatar_url: 'https://' })
                           setPreviewAvatar('')
                         }}
                       >
@@ -906,7 +906,7 @@ export default function AdminDashboard() {
                         type="button"
                         className={`tab-btn ${editFormData.avatar_url.startsWith('http') ? 'active' : ''}`}
                         onClick={() => {
-                          setEditFormData({ ...editFormData, avatar_url: '' })
+                          setEditFormData({ ...editFormData, avatar_url: 'https://' })
                           setEditPreviewAvatar('')
                         }}
                       >
@@ -1232,20 +1232,31 @@ export default function AdminDashboard() {
         .admin-container {
           max-width: 1300px;
           margin: 0 auto;
-          background: white;
-          border-radius: 16px;
+          background: linear-gradient(135deg, 
+            rgba(173, 216, 230, 0.3) 0%, 
+            rgba(135, 206, 250, 0.25) 50%, 
+            rgba(176, 224, 230, 0.3) 100%);
+          backdrop-filter: blur(30px) saturate(180%);
+          -webkit-backdrop-filter: blur(30px) saturate(180%);
+          border-radius: 20px;
           padding: 0;
-          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 
+                      inset 0 0 0 1px rgba(255, 255, 255, 0.3);
           overflow: hidden;
+          border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .admin-header {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          background: linear-gradient(135deg, 
+            rgba(102, 126, 234, 0.95) 0%, 
+            rgba(118, 75, 162, 0.95) 100%);
+          backdrop-filter: blur(10px);
           padding: 32px 40px;
           display: flex;
           justify-content: space-between;
           align-items: center;
           color: white;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.15);
         }
 
         .header-left h1 {
@@ -1294,12 +1305,14 @@ export default function AdminDashboard() {
           display: flex;
           align-items: center;
           gap: 12px;
-          border-bottom: 1px solid #f0f0f0;
+          background: rgba(255, 255, 255, 0.4);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.3);
         }
 
         .search-bar {
           padding: 20px 40px;
-          border-bottom: 1px solid #f0f0f0;
+          background: rgba(255, 255, 255, 0.35);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.3);
           display: flex;
           align-items: center;
           gap: 12px;
@@ -1383,10 +1396,10 @@ export default function AdminDashboard() {
         }
 
         .add-user-form {
-          background: #f9fafb;
+          background: rgba(255, 255, 255, 0.45);
           padding: 30px 40px;
           margin: 0;
-          border-bottom: 1px solid #e5e7eb;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.3);
         }
 
         .add-user-form h3 {
@@ -1438,6 +1451,7 @@ export default function AdminDashboard() {
 
         .users-table-container {
           padding: 24px 40px 40px;
+          background: rgba(255, 255, 255, 0.35);
         }
 
         .users-table-container h2 {
@@ -1450,26 +1464,30 @@ export default function AdminDashboard() {
         .users-table {
           width: 100%;
           border-collapse: collapse;
-          background: white;
+          background: rgba(255, 255, 255, 0.5);
+          border-radius: 12px;
+          overflow: hidden;
         }
 
         .users-table th {
-          background: #f5f5f5;
-          padding: 12px;
+          background: rgba(102, 126, 234, 0.15);
+          padding: 14px 12px;
           text-align: left;
           font-weight: 600;
-          color: #555;
-          border-bottom: 2px solid #ddd;
+          color: #333;
+          border-bottom: 2px solid rgba(255, 255, 255, 0.4);
+          font-size: 14px;
         }
 
         .users-table td {
           padding: 12px;
-          border-bottom: 1px solid #eee;
-          color: #333;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+          color: #1a1a1a;
+          background: rgba(255, 255, 255, 0.2);
         }
 
-        .users-table tbody tr:hover {
-          background: #f9f9f9;
+        .users-table tbody tr:hover td {
+          background: rgba(102, 126, 234, 0.08);
         }
 
         .empty-state {
