@@ -126,14 +126,30 @@ export default function ChatPage() {
     let scrollTimeout: NodeJS.Timeout
 
     const handleScroll = () => {
-      setIsUserScrolling(true)
-      setShouldAutoScroll(false)
+      const { scrollTop, scrollHeight, clientHeight } = messagesContainer
+      const isAtBottom = scrollTop + clientHeight >= scrollHeight - 10 // 10px 容差
+      
+      if (!isAtBottom) {
+        // 用户不在底部，停止自动滚动
+        setIsUserScrolling(true)
+        setShouldAutoScroll(false)
+      } else {
+        // 用户在底部，恢复自动滚动
+        setIsUserScrolling(false)
+        setShouldAutoScroll(true)
+      }
       
       clearTimeout(scrollTimeout)
       scrollTimeout = setTimeout(() => {
-        setIsUserScrolling(false)
-        setShouldAutoScroll(true)
-      }, 1000) // 用户停止滚动1秒后恢复自动滚动
+        // 用户停止滚动后，检查是否在底部
+        const { scrollTop: newScrollTop, scrollHeight: newScrollHeight, clientHeight: newClientHeight } = messagesContainer
+        const isStillAtBottom = newScrollTop + newClientHeight >= newScrollHeight - 10
+        
+        if (isStillAtBottom) {
+          setIsUserScrolling(false)
+          setShouldAutoScroll(true)
+        }
+      }, 500) // 用户停止滚动0.5秒后检查
     }
 
     messagesContainer.addEventListener('scroll', handleScroll)
