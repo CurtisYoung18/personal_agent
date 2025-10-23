@@ -1,10 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // 增加 API 路由的请求体大小限制
+  // API 路由配置（Vercel 免费版限制为 4.5MB）
   api: {
     bodyParser: {
-      sizeLimit: '10mb', // 允许最大 10MB 的请求体
+      sizeLimit: '4.5mb',
     },
   },
 }

@@ -1,5 +1,14 @@
 import { NextApiRequest, NextApiResponse } from 'next'
 
+// 配置 API 路由以支持更大的请求体
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '4.5mb',
+    },
+  },
+}
+
 // 发送消息到 GPTBots（streaming 模式）
 export default async function handler(
   req: NextApiRequest,

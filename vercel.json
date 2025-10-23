@@ -2,6 +2,12 @@
   "buildCommand": "npm run build",
   "outputDirectory": ".next",
   "framework": "nextjs",
-  "regions": ["hkg1"]
+  "regions": ["hkg1"],
+  "functions": {
+    "api/conversation/send.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    }
+  }
 }
 

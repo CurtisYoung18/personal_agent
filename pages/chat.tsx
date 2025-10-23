@@ -92,8 +92,8 @@ export default function ChatPage() {
         continue
       }
       
-      // 文件大小限制（调整为更合理的大小）
-      const maxSize = fileType === 'image' ? 5 * 1024 * 1024 : 10 * 1024 * 1024 // 图片5MB，其他10MB
+      // 文件大小限制（Vercel 限制为 4.5MB）
+      const maxSize = fileType === 'image' ? 2 * 1024 * 1024 : 3 * 1024 * 1024 // 图片2MB，其他3MB
       if (file.size > maxSize) {
         alert(`文件 ${file.name} 太大，${fileType === 'image' ? '图片' : '文件'}最大 ${maxSize / 1024 / 1024}MB`)
         continue
