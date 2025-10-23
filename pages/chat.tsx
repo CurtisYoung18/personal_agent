@@ -60,6 +60,7 @@ export default function ChatPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const isUserScrollingRef = useRef(false)
   const shouldAutoScrollRef = useRef(true)
+  const [showScrollToBottom, setShowScrollToBottom] = useState(false)
   
   // 文件类型检测和分类
   const getFileType = (fileName: string): 'image' | 'audio' | 'document' | null => {
@@ -222,79 +223,93 @@ export default function ChatPage() {
   }
 
   // 自動滾動到最新消息
-  const scrollToBottom = () => {
-    if (shouldAutoScrollRef.current && !isUserScrollingRef.current) {
+  const scrollToBottom = (force: boolean = false) => {
+    if (force || (shouldAutoScrollRef.current && !isUserScrollingRef.current)) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+      setShowScrollToBottom(false)
     }
+  }
+
+  // 检查是否在底部
+  const checkIfAtBottom = () => {
+    const messagesContainer = document.querySelector('.chat-messages')
+    if (!messagesContainer) return true
+    
+    const { scrollTop, scrollHeight, clientHeight } = messagesContainer
+    return scrollTop + clientHeight >= scrollHeight - 50
   }
 
   useEffect(() => {
     scrollToBottom()
   }, [messages])
 
-  // 监听用户滚动行为（鼠标滚轮和触摸）
+  // 监听用户滚动行为（鼠标滚轮、触摸和鼠标移动）
   useEffect(() => {
     const messagesContainer = document.querySelector('.chat-messages')
     if (!messagesContainer) return
 
     let scrollTimeout: NodeJS.Timeout
-    let userInteractionTimeout: NodeJS.Timeout
 
-    // 监听鼠标滚轮事件
+    // 检查滚动位置并更新按钮显示
+    const checkScrollPosition = () => {
+      const isAtBottom = checkIfAtBottom()
+      
+      if (!isAtBottom) {
+        setShowScrollToBottom(true)
+        isUserScrollingRef.current = true
+        shouldAutoScrollRef.current = false
+      } else {
+        setShowScrollToBottom(false)
+        isUserScrollingRef.current = false
+        shouldAutoScrollRef.current = true
+      }
+    }
+
+    // 监听鼠标滚轮事件 - 立即禁用自动滚动
     const handleWheel = () => {
+      // 只要用户滚动，立即禁用自动滚动
       isUserScrollingRef.current = true
       shouldAutoScrollRef.current = false
       
-      clearTimeout(userInteractionTimeout)
-      userInteractionTimeout = setTimeout(() => {
-        const { scrollTop, scrollHeight, clientHeight } = messagesContainer
-        const isAtBottom = scrollTop + clientHeight >= scrollHeight - 100
-        
-        if (isAtBottom) {
-          isUserScrollingRef.current = false
-          shouldAutoScrollRef.current = true
-        }
-      }, 3000)
+      clearTimeout(scrollTimeout)
+      scrollTimeout = setTimeout(checkScrollPosition, 150)
     }
 
     // 监听触摸事件（移动端）
     const handleTouchStart = () => {
       isUserScrollingRef.current = true
       shouldAutoScrollRef.current = false
-    }
-
-    // 监听滚动事件（作为备用）
-    const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } = messagesContainer
-      const isAtBottom = scrollTop + clientHeight >= scrollHeight - 100
-      
-      if (!isAtBottom && !isUserScrollingRef.current) {
-        isUserScrollingRef.current = true
-        shouldAutoScrollRef.current = false
-      }
       
       clearTimeout(scrollTimeout)
-      scrollTimeout = setTimeout(() => {
-        const { scrollTop: newScrollTop, scrollHeight: newScrollHeight, clientHeight: newClientHeight } = messagesContainer
-        const isStillAtBottom = newScrollTop + newClientHeight >= newScrollHeight - 100
-        
-        if (isStillAtBottom) {
-          isUserScrollingRef.current = false
-          shouldAutoScrollRef.current = true
-        }
-      }, 2000)
+      scrollTimeout = setTimeout(checkScrollPosition, 150)
+    }
+
+    // 监听鼠标移动事件（在聊天区域内）
+    const handleMouseMove = () => {
+      // 鼠标在聊天区域移动时，检查是否需要禁用自动滚动
+      if (!checkIfAtBottom()) {
+        isUserScrollingRef.current = true
+        shouldAutoScrollRef.current = false
+        setShowScrollToBottom(true)
+      }
+    }
+
+    // 监听滚动事件
+    const handleScroll = () => {
+      checkScrollPosition()
     }
 
     messagesContainer.addEventListener('wheel', handleWheel, { passive: true })
     messagesContainer.addEventListener('touchstart', handleTouchStart, { passive: true })
+    messagesContainer.addEventListener('mousemove', handleMouseMove, { passive: true })
     messagesContainer.addEventListener('scroll', handleScroll, { passive: true })
     
     return () => {
       messagesContainer.removeEventListener('wheel', handleWheel)
       messagesContainer.removeEventListener('touchstart', handleTouchStart)
+      messagesContainer.removeEventListener('mousemove', handleMouseMove)
       messagesContainer.removeEventListener('scroll', handleScroll)
       clearTimeout(scrollTimeout)
-      clearTimeout(userInteractionTimeout)
     }
   }, [])
 
@@ -814,6 +829,19 @@ export default function ChatPage() {
           ))}
           <div ref={messagesEndRef} />
         </div>
+
+        {/* 回到底部按钮 */}
+        {showScrollToBottom && (
+          <button 
+            className="scroll-to-bottom-btn"
+            onClick={() => scrollToBottom(true)}
+            title="回到底部"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 5V19M12 19L19 12M12 19L5 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+        )}
 
         {/* 輸入區域 */}
         <div className="chat-input-container">
