@@ -578,6 +578,38 @@ export default function ChatPage() {
   }
 
   // 处理登出
+  // 创建新对话
+  const handleNewConversation = async () => {
+    if (!userInfo) return
+    
+    try {
+      const convResponse = await fetch('/api/conversation/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: userInfo.account }),
+      })
+
+      const convData = await convResponse.json()
+
+      if (convResponse.ok && convData.success) {
+        // 清空当前对话
+        setMessages([])
+        setConversationId(convData.conversationId)
+        // 重新显示欢迎动画
+        setShowWelcome(true)
+        // 如果历史列表打开，刷新列表
+        if (showHistory) {
+          fetchConversationList()
+        }
+      } else {
+        throw new Error(convData.message || '创建新对话失败')
+      }
+    } catch (error) {
+      console.error('❌ 创建新对话失败:', error)
+      alert('创建新对话失败，请重试')
+    }
+  }
+
   const handleLogout = () => {
     if (confirm('确定要登出吗？')) {
       // 清除 sessionStorage 登录标记
@@ -620,7 +652,7 @@ export default function ChatPage() {
 
   return (
     <div className="chat-page fade-in">
-      {/* 顶部导航栏 - 用户信息 + 登出 */}
+      {/* 顶部导航栏 - 用户信息 + 新建对话 + 登出 */}
       <header className={`chat-page-header-minimal ${showHistory ? 'with-history' : ''}`}>
         <div className="header-user-profile">
           <button 
@@ -646,9 +678,21 @@ export default function ChatPage() {
           />
           <span className="user-profile-name">{userInfo.name || userInfo.account}</span>
         </div>
-        <button onClick={handleLogout} className="logout-btn-minimal">
-          登出
-        </button>
+        <div className="header-actions">
+          <button 
+            onClick={handleNewConversation} 
+            className="new-chat-btn"
+            title="新建对话"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            <span>新建对话</span>
+          </button>
+          <button onClick={handleLogout} className="logout-btn-minimal">
+            登出
+          </button>
+        </div>
       </header>
 
       {/* 历史对话侧边栏 */}

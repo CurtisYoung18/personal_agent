@@ -564,6 +564,49 @@ body {
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
+/* 头部按钮组 */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* 新建对话按钮 */
+.new-chat-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: rgba(102, 126, 234, 0.2);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(102, 126, 234, 0.4);
+  border-radius: 8px;
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.new-chat-btn svg {
+  transition: transform 0.3s ease;
+}
+
+.new-chat-btn:hover {
+  background: rgba(102, 126, 234, 0.35);
+  border-color: rgba(102, 126, 234, 0.6);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.new-chat-btn:hover svg {
+  transform: rotate(90deg);
+}
+
+.new-chat-btn:active {
+  transform: translateY(0);
+}
+
 .logout-btn-minimal {
   padding: 8px 20px;
   background: rgba(255, 255, 255, 0.2);
