@@ -1021,10 +1021,10 @@ export default function AdminDashboard() {
                     </td>
                     <td><strong>{user.account}</strong></td>
                     <td>{user.name || '-'}</td>
-                    <td>{new Date(user.created_at).toLocaleString('zh-CN')}</td>
+                    <td>{new Date(user.created_at).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}</td>
                     <td>
                       {user.last_login 
-                        ? new Date(user.last_login).toLocaleString('zh-CN')
+                        ? new Date(user.last_login).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })
                         : '从未登录'
                       }
                     </td>
