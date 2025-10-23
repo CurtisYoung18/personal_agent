@@ -140,6 +140,27 @@ export default function ChatPage() {
     setUploadedFiles(prev => prev.filter((_, i) => i !== index))
   }
   
+  // 复制消息内容为 Markdown
+  const copyToMarkdown = async (content: string) => {
+    try {
+      await navigator.clipboard.writeText(content)
+      // 可以添加一个临时提示
+      const btn = document.activeElement as HTMLButtonElement
+      if (btn) {
+        const originalText = btn.innerHTML
+        btn.innerHTML = '✓ 已复制'
+        btn.style.color = '#10b981'
+        setTimeout(() => {
+          btn.innerHTML = originalText
+          btn.style.color = ''
+        }, 2000)
+      }
+    } catch (error) {
+      console.error('复制失败:', error)
+      alert('复制失败，请重试')
+    }
+  }
+  
   // 計時器狀態
   const [elapsedTime, setElapsedTime] = useState(0)
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null)
@@ -698,9 +719,18 @@ export default function ChatPage() {
                 {msg.content !== '' && (
                   <div className="message-text">
                     {msg.role === 'assistant' ? (
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {msg.content}
-                      </ReactMarkdown>
+                      <>
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {msg.content}
+                        </ReactMarkdown>
+                        <button 
+                          className="copy-markdown-btn"
+                          onClick={() => copyToMarkdown(msg.content)}
+                          title="复制为 Markdown"
+                        >
+                          📋 复制
+                        </button>
+                      </>
                     ) : (
                       msg.content
                     )}

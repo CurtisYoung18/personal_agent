@@ -929,6 +929,7 @@ body {
   line-height: 1.5;
   word-wrap: break-word;
   white-space: pre-wrap;
+  position: relative;
 }
 
 .message.user .message-text {
@@ -945,6 +946,40 @@ body {
   border-bottom-left-radius: 4px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   backdrop-filter: blur(10px);
+}
+
+/* 复制按钮 */
+.copy-markdown-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 6px 12px;
+  background: rgba(102, 126, 234, 0.1);
+  border: 1px solid rgba(102, 126, 234, 0.3);
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #667eea;
+  cursor: pointer;
+  transition: all 0.2s;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.message.assistant .message-text:hover .copy-markdown-btn {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.copy-markdown-btn:hover {
+  background: rgba(102, 126, 234, 0.2);
+  border-color: rgba(102, 126, 234, 0.5);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.copy-markdown-btn:active {
+  transform: translateY(0);
 }
 
 /* Markdown 样式 */
