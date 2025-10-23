@@ -594,13 +594,6 @@ export default function ChatPage() {
       {/* 聊天容器 */}
       <div className={`chat-container ${showHistory ? 'with-history' : ''}`}>
         <div className="chat-messages">
-          {messages.length === 0 && !showWelcome && (
-            <div className="welcome-message">
-              <h2>👋 您好，{userInfo.name || userInfo.account}！</h2>
-              <p>我是您的个人工作助手，有什么可以帮到您的吗？</p>
-            </div>
-          )}
-          
           {messages.map((msg) => (
             <div key={msg.id} className={`message ${msg.role}`}>
               <div className="message-avatar">
