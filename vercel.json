@@ -4,7 +4,7 @@
   "framework": "nextjs",
   "regions": ["hkg1"],
   "functions": {
-    "api/conversation/send.ts": {
+    "pages/api/conversation/send.ts": {
       "maxDuration": 60,
       "memory": 1024
     }
