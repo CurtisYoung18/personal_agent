@@ -92,8 +92,8 @@ export default function ChatPage() {
         continue
       }
       
-      // 文件大小限制
-      const maxSize = fileType === 'image' ? 10 * 1024 * 1024 : 20 * 1024 * 1024 // 图片10MB，其他20MB
+      // 文件大小限制（调整为更合理的大小）
+      const maxSize = fileType === 'image' ? 5 * 1024 * 1024 : 10 * 1024 * 1024 // 图片5MB，其他10MB
       if (file.size > maxSize) {
         alert(`文件 ${file.name} 太大，${fileType === 'image' ? '图片' : '文件'}最大 ${maxSize / 1024 / 1024}MB`)
         continue
@@ -787,15 +787,6 @@ export default function ChatPage() {
               multiple
               style={{ display: 'none' }}
             />
-            <button
-              className="attach-button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={sending}
-              type="button"
-              title="上传文件（图片、音频、文档）"
-            >
-              📎
-            </button>
             <textarea
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
@@ -805,17 +796,28 @@ export default function ChatPage() {
               rows={3}
               className="chat-input"
             />
-            <button
-              onClick={handleSendMessage}
-              disabled={(!inputMessage.trim() && uploadedFiles.length === 0) || sending}
-              className="send-button"
-            >
-              {sending ? (
-                <BiLoaderAlt className="spinner-icon" />
-              ) : (
-                <HiPaperAirplane />
-              )}
-            </button>
+            <div className="button-column">
+              <button
+                className="attach-button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={sending}
+                type="button"
+                title="上传文件（图片、音频、文档）"
+              >
+                📎
+              </button>
+              <button
+                onClick={handleSendMessage}
+                disabled={(!inputMessage.trim() && uploadedFiles.length === 0) || sending}
+                className="send-button"
+              >
+                {sending ? (
+                  <BiLoaderAlt className="spinner-icon" />
+                ) : (
+                  <HiPaperAirplane />
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </div>

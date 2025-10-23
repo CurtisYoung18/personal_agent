@@ -1205,6 +1205,14 @@ body {
   align-items: flex-end;
 }
 
+/* 按钮列 */
+.button-column {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+
 /* 附件按钮 */
 .attach-button {
   width: 48px;
