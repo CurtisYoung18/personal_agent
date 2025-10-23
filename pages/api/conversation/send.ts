@@ -9,12 +9,12 @@ export default async function handler(
     return res.status(405).json({ success: false, message: 'Method not allowed' })
   }
 
-  const { conversationId, userId, message } = req.body
+  const { conversationId, userId, message, files } = req.body
 
-  if (!message) {
+  if (!message && (!files || files.length === 0)) {
     return res.status(400).json({
       success: false,
-      message: '缺少消息内容',
+      message: '缺少消息内容或文件',
     })
   }
 
@@ -24,18 +24,49 @@ export default async function handler(
       throw new Error('GPTBOTS_API_KEY not configured')
     }
 
+    // 构建消息内容数组
+    const content: any[] = []
+    
+    // 添加文本消息（如果有）
+    if (message && message.trim()) {
+      content.push({
+        type: 'text',
+        text: message,
+      })
+    }
+    
+    // 添加文件（如果有）
+    if (files && files.length > 0) {
+      // 按类型分组文件
+      const filesByType: { [key: string]: any[] } = {}
+      
+      files.forEach((file: any) => {
+        if (!filesByType[file.type]) {
+          filesByType[file.type] = []
+        }
+        filesByType[file.type].push({
+          base64_content: file.base64,
+          format: file.format,
+          name: file.name
+        })
+      })
+      
+      // 添加分组后的文件到 content
+      Object.entries(filesByType).forEach(([type, items]) => {
+        content.push({
+          type: type,
+          [type]: items
+        })
+      })
+    }
+
     // 构建请求体
     const requestBody: any = {
       response_mode: 'streaming',  // 使用 streaming 模式实现逐字输出
       messages: [
         {
           role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: message,
-            },
-          ],
+          content: content,
         },
       ],
     }
@@ -48,7 +79,8 @@ export default async function handler(
     console.log('📤 发送到 GPTBots (streaming):', {
       hasConversationId: !!conversationId,
       userId,
-      messageLength: message.length
+      messageLength: message?.length || 0,
+      filesCount: files?.length || 0
     })
 
     // 调用 GPTBots API 发送消息（streaming）

@@ -46,7 +46,12 @@ export default function ChatPage() {
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [isStreaming, setIsStreaming] = useState(false)
-  const [uploadedImages, setUploadedImages] = useState<Array<{base64: string, format: string, name: string}>>([])
+  const [uploadedFiles, setUploadedFiles] = useState<Array<{
+    type: 'image' | 'audio' | 'document',
+    base64: string,
+    format: string,
+    name: string
+  }>>([])
   const [showWelcome, setShowWelcome] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
   const [conversationList, setConversationList] = useState<ConversationItem[]>([])
@@ -55,6 +60,85 @@ export default function ChatPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const isUserScrollingRef = useRef(false)
   const shouldAutoScrollRef = useRef(true)
+  
+  // 文件类型检测和分类
+  const getFileType = (fileName: string): 'image' | 'audio' | 'document' | null => {
+    const ext = fileName.split('.').pop()?.toLowerCase()
+    if (!ext) return null
+    
+    const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp']
+    const audioExts = ['mp3', 'wav']
+    const documentExts = ['pdf', 'txt', 'docx', 'csv', 'xlsx', 'html', 'json', 'md', 'tex', 'ts', 'xml']
+    
+    if (imageExts.includes(ext)) return 'image'
+    if (audioExts.includes(ext)) return 'audio'
+    if (documentExts.includes(ext)) return 'document'
+    return null
+  }
+  
+  // 处理文件上传
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files || files.length === 0) return
+    
+    const newFiles: Array<{type: 'image' | 'audio' | 'document', base64: string, format: string, name: string}> = []
+    
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i]
+      const fileType = getFileType(file.name)
+      
+      if (!fileType) {
+        alert(`不支持的文件类型: ${file.name}`)
+        continue
+      }
+      
+      // 文件大小限制
+      const maxSize = fileType === 'image' ? 10 * 1024 * 1024 : 20 * 1024 * 1024 // 图片10MB，其他20MB
+      if (file.size > maxSize) {
+        alert(`文件 ${file.name} 太大，${fileType === 'image' ? '图片' : '文件'}最大 ${maxSize / 1024 / 1024}MB`)
+        continue
+      }
+      
+      try {
+        const reader = new FileReader()
+        const base64 = await new Promise<string>((resolve, reject) => {
+          reader.onload = () => {
+            const result = reader.result as string
+            // 移除 data:xxx;base64, 前缀
+            const base64Data = result.split(',')[1]
+            resolve(base64Data)
+          }
+          reader.onerror = reject
+          reader.readAsDataURL(file)
+        })
+        
+        const format = file.name.split('.').pop()?.toLowerCase() || ''
+        newFiles.push({
+          type: fileType,
+          base64,
+          format,
+          name: file.name
+        })
+      } catch (error) {
+        console.error('读取文件失败:', error)
+        alert(`读取文件 ${file.name} 失败`)
+      }
+    }
+    
+    if (newFiles.length > 0) {
+      setUploadedFiles(prev => [...prev, ...newFiles])
+    }
+    
+    // 清空 input
+    if (e.target) {
+      e.target.value = ''
+    }
+  }
+  
+  // 移除文件
+  const removeFile = (index: number) => {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index))
+  }
   
   // 計時器狀態
   const [elapsedTime, setElapsedTime] = useState(0)
@@ -356,7 +440,7 @@ export default function ChatPage() {
 
   // 处理发送消息（streaming 模式）
   const handleSendMessage = async () => {
-    if (!inputMessage.trim() || sending || !userInfo) return
+    if ((!inputMessage.trim() && uploadedFiles.length === 0) || sending || !userInfo) return
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -367,6 +451,8 @@ export default function ChatPage() {
 
     setMessages(prev => [...prev, userMessage])
     setInputMessage('')
+    const currentFiles = [...uploadedFiles]
+    setUploadedFiles([]) // 清空已上传的文件
     setSending(true)
     setIsStreaming(true)
 
@@ -388,6 +474,7 @@ export default function ChatPage() {
           conversationId: conversationId || undefined,
           userId: userInfo.account,
           message: userMessage.content,
+          files: currentFiles.length > 0 ? currentFiles : undefined,
         }),
       })
 
@@ -634,26 +721,72 @@ export default function ChatPage() {
 
         {/* 輸入區域 */}
         <div className="chat-input-container">
-          <textarea
-            value={inputMessage}
-            onChange={(e) => setInputMessage(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="输入消息...（Shift+Enter 换行，Enter 发送）"
-            disabled={sending}
-            rows={3}
-            className="chat-input"
-          />
-          <button
-            onClick={handleSendMessage}
-            disabled={!inputMessage.trim() || sending}
-            className="send-button"
-          >
-            {sending ? (
-              <BiLoaderAlt className="spinner-icon" />
-            ) : (
-              <HiPaperAirplane />
-            )}
-          </button>
+          {/* 文件预览区域 */}
+          {uploadedFiles.length > 0 && (
+            <div className="uploaded-files-preview">
+              {uploadedFiles.map((file, index) => (
+                <div key={index} className="file-preview-item">
+                  <div className="file-preview-icon">
+                    {file.type === 'image' && '🖼️'}
+                    {file.type === 'audio' && '🎵'}
+                    {file.type === 'document' && '📄'}
+                  </div>
+                  <div className="file-preview-info">
+                    <span className="file-preview-name">{file.name}</span>
+                    <span className="file-preview-type">{file.format.toUpperCase()}</span>
+                  </div>
+                  <button 
+                    className="file-preview-remove"
+                    onClick={() => removeFile(index)}
+                    type="button"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          
+          {/* 输入框和按钮 */}
+          <div className="input-row">
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileUpload}
+              accept=".jpg,.jpeg,.png,.gif,.webp,.mp3,.wav,.pdf,.txt,.docx,.csv,.xlsx,.html,.json,.md"
+              multiple
+              style={{ display: 'none' }}
+            />
+            <button
+              className="attach-button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={sending}
+              type="button"
+              title="上传文件（图片、音频、文档）"
+            >
+              📎
+            </button>
+            <textarea
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="输入消息...（Shift+Enter 换行，Enter 发送）"
+              disabled={sending}
+              rows={3}
+              className="chat-input"
+            />
+            <button
+              onClick={handleSendMessage}
+              disabled={(!inputMessage.trim() && uploadedFiles.length === 0) || sending}
+              className="send-button"
+            >
+              {sending ? (
+                <BiLoaderAlt className="spinner-icon" />
+              ) : (
+                <HiPaperAirplane />
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </div>
