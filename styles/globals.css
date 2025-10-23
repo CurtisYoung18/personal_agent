@@ -948,10 +948,10 @@ body {
   backdrop-filter: blur(10px);
 }
 
-/* 复制按钮 */
+/* 复制按钮 - 放在右下角 */
 .copy-markdown-btn {
   position: absolute;
-  top: 8px;
+  bottom: 8px;
   right: 8px;
   padding: 6px 12px;
   background: rgba(102, 126, 234, 0.1);
@@ -1196,6 +1196,61 @@ body {
   background: #ef4444;
   color: white;
   transform: scale(1.1);
+}
+
+/* 消息中的文件预览 */
+.message-files {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.message-file-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 8px;
+  transition: all 0.2s;
+  max-width: 100%;
+}
+
+.message.user .message-file-item {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.message-file-item:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateX(4px);
+}
+
+.message-file-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.message-file-name {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.95);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.message-file-format {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.75);
+  background: rgba(255, 255, 255, 0.15);
+  padding: 2px 8px;
+  border-radius: 4px;
+  flex-shrink: 0;
 }
 
 /* 输入行 */

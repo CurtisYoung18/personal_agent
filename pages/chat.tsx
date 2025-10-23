@@ -18,10 +18,10 @@ interface Message {
   role: 'user' | 'assistant'
   content: string
   timestamp: number
-  images?: Array<{
-    base64: string
-    format: string
+  files?: Array<{
+    type: 'image' | 'audio' | 'document'
     name: string
+    format: string
   }>
 }
 
@@ -463,11 +463,17 @@ export default function ChatPage() {
   const handleSendMessage = async () => {
     if ((!inputMessage.trim() && uploadedFiles.length === 0) || sending || !userInfo) return
 
+    // 准备用户消息，包含文件信息
     const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
       content: inputMessage.trim(),
       timestamp: Date.now(),
+      files: uploadedFiles.length > 0 ? uploadedFiles.map(f => ({
+        type: f.type,
+        name: f.name,
+        format: f.format
+      })) : undefined,
     }
 
     setMessages(prev => [...prev, userMessage])
@@ -734,6 +740,22 @@ export default function ChatPage() {
                     ) : (
                       msg.content
                     )}
+                  </div>
+                )}
+                {/* 用户消息的文件预览 */}
+                {msg.role === 'user' && msg.files && msg.files.length > 0 && (
+                  <div className="message-files">
+                    {msg.files.map((file, index) => (
+                      <div key={index} className="message-file-item">
+                        <span className="message-file-icon">
+                          {file.type === 'image' && '🖼️'}
+                          {file.type === 'audio' && '🎵'}
+                          {file.type === 'document' && '📄'}
+                        </span>
+                        <span className="message-file-name">{file.name}</span>
+                        <span className="message-file-format">{file.format.toUpperCase()}</span>
+                      </div>
+                    ))}
                   </div>
                 )}
                 {msg.role === 'assistant' && msg.content === '' && isStreaming && (
