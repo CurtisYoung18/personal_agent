@@ -1049,10 +1049,10 @@ body {
   pointer-events: all;
 }
 
-/* 用户消息的操作栏（紫色调） */
+/* 用户消息的操作栏（白色调） */
 .message.user .message-actions {
-  background: rgba(102, 126, 234, 0.15);
-  border-color: rgba(102, 126, 234, 0.3);
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(255, 255, 255, 0.5);
 }
 
 /* AI 消息的操作栏（白色调） */
@@ -1097,7 +1097,7 @@ body {
 
 /* 用户消息的时间戳 */
 .message.user .message-action-time {
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(0, 0, 0, 0.6);
 }
 
 /* AI 消息的时间戳 */
