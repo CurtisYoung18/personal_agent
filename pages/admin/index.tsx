@@ -6,6 +6,7 @@ interface User {
   account: string
   name: string
   avatar_url?: string
+  api_key?: string
   created_at: string
   last_login: string | null
 }
@@ -39,6 +40,7 @@ export default function AdminDashboard() {
     password: '',
     name: '',
     avatar_url: '',
+    api_key: '',
   })
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [previewAvatar, setPreviewAvatar] = useState('')
@@ -49,6 +51,7 @@ export default function AdminDashboard() {
     password: '',
     name: '',
     avatar_url: '',
+    api_key: '',
   })
   const [editPreviewAvatar, setEditPreviewAvatar] = useState('')
 
@@ -179,7 +182,7 @@ export default function AdminDashboard() {
       
       if (data.success) {
         showToast('用户添加成功！', 'success')
-        setNewUser({ account: '', password: '', name: '', avatar_url: '' })
+        setNewUser({ account: '', password: '', name: '', avatar_url: '', api_key: '' })
         setPreviewAvatar('')
         setShowAddForm(false)
         fetchUsers()
@@ -219,6 +222,7 @@ export default function AdminDashboard() {
       password: '', // 不显示原密码
       name: user.name || '',
       avatar_url: user.avatar_url || '',
+      api_key: user.api_key || '',
     })
     setEditPreviewAvatar(user.avatar_url || '')
     setShowAddForm(false) // 关闭添加表单
@@ -232,6 +236,7 @@ export default function AdminDashboard() {
       password: '',
       name: '',
       avatar_url: '',
+      api_key: '',
     })
     setEditPreviewAvatar('')
   }
@@ -847,6 +852,18 @@ export default function AdminDashboard() {
                   </div>
                 </div>
               </div>
+              <div className="form-group">
+                <label>API Key <span style={{color: '#999', fontWeight: 'normal'}}>(可选)</span></label>
+                <input
+                  type="text"
+                  value={newUser.api_key}
+                  onChange={(e) => setNewUser({ ...newUser, api_key: e.target.value })}
+                  placeholder="输入 GPTBots API Key"
+                />
+                <p className="helper-text">
+                  🔑 为此用户分配专用的 API Key（一个 Key 对应一个 Bot），留空则使用环境变量中的默认配置
+                </p>
+              </div>
               <button type="submit" className="btn-submit" disabled={uploadingAvatar}>
                 {uploadingAvatar ? '上传中...' : '添加用户'}
               </button>
@@ -973,6 +990,18 @@ export default function AdminDashboard() {
                   </div>
                 </div>
               </div>
+              <div className="form-group">
+                <label>API Key <span style={{color: '#999', fontWeight: 'normal'}}>(可选)</span></label>
+                <input
+                  type="text"
+                  value={editFormData.api_key}
+                  onChange={(e) => setEditFormData({ ...editFormData, api_key: e.target.value })}
+                  placeholder="输入 GPTBots API Key"
+                />
+                <p className="helper-text">
+                  🔑 为此用户分配专用的 API Key（一个 Key 对应一个 Bot），留空则使用环境变量中的默认配置
+                </p>
+              </div>
               <div className="form-actions">
                 <button type="submit" className="btn-submit" disabled={uploadingAvatar}>
                   {uploadingAvatar ? '处理中...' : '保存修改'}
@@ -994,6 +1023,7 @@ export default function AdminDashboard() {
                 <th>头像</th>
                 <th>账号</th>
                 <th>姓名</th>
+                <th>API Key</th>
                 <th>创建时间</th>
                 <th>最后登录</th>
                 <th>操作</th>
@@ -1002,7 +1032,7 @@ export default function AdminDashboard() {
             <tbody>
               {filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="empty-state">
+                  <td colSpan={8} className="empty-state">
                     {searchQuery ? '未找到匹配的用户' : '暂无用户数据，请添加用户'}
                   </td>
                 </tr>
@@ -1021,6 +1051,11 @@ export default function AdminDashboard() {
                     </td>
                     <td><strong>{user.account}</strong></td>
                     <td>{user.name || '-'}</td>
+                    <td>
+                      <span className="api-key-cell" title={user.api_key || '未设置'}>
+                        {user.api_key ? `${user.api_key.substring(0, 20)}...` : '-'}
+                      </span>
+                    </td>
                     <td>{new Date(user.created_at).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}</td>
                     <td>
                       {user.last_login 

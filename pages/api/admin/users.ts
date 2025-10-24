@@ -9,7 +9,7 @@ export default async function handler(
     // GET - 获取所有用户
     if (req.method === 'GET') {
       const result = await sql`
-        SELECT id, account, name, avatar_url, created_at, last_login
+        SELECT id, account, name, avatar_url, api_key, created_at, last_login
         FROM users
         ORDER BY id ASC
       `
@@ -22,7 +22,7 @@ export default async function handler(
 
     // POST - 添加新用户
     if (req.method === 'POST') {
-      const { account, password, name, avatar_url } = req.body
+      const { account, password, name, avatar_url, api_key } = req.body
 
       if (!account || !password) {
         return res.status(400).json({
@@ -45,9 +45,9 @@ export default async function handler(
 
       // 插入新用户
       const result = await sql`
-        INSERT INTO users (account, password, name, avatar_url)
-        VALUES (${account}, ${password}, ${name || null}, ${avatar_url || null})
-        RETURNING id, account, name, avatar_url
+        INSERT INTO users (account, password, name, avatar_url, api_key)
+        VALUES (${account}, ${password}, ${name || null}, ${avatar_url || null}, ${api_key || null})
+        RETURNING id, account, name, avatar_url, api_key
       `
 
       return res.status(201).json({
@@ -59,7 +59,7 @@ export default async function handler(
 
     // PUT - 更新用户信息
     if (req.method === 'PUT') {
-      const { id, account, password, name, avatar_url } = req.body
+      const { id, account, password, name, avatar_url, api_key } = req.body
 
       if (!id) {
         return res.status(400).json({
@@ -102,6 +102,10 @@ export default async function handler(
         updates.push(`avatar_url = $${updates.length + 1}`)
         values.push(avatar_url || null)
       }
+      if (api_key !== undefined) {
+        updates.push(`api_key = $${updates.length + 1}`)
+        values.push(api_key || null)
+      }
 
       if (updates.length === 0) {
         return res.status(400).json({
@@ -117,7 +121,7 @@ export default async function handler(
         UPDATE users 
         SET ${updates.join(', ')}
         WHERE id = $${values.length}
-        RETURNING id, account, name, avatar_url
+        RETURNING id, account, name, avatar_url, api_key
       `
 
       const result = await sql.query(query, values)
