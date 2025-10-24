@@ -63,14 +63,13 @@ export default function ChatPage() {
   const messagesContainerRef = useRef<Element | null>(null)
   const [showScrollToBottom, setShowScrollToBottom] = useState(false)
 
-  // 调试：监控 showScrollToBottom 状态变化
-  useEffect(() => {
-    console.log('🔍 showScrollToBottom 状态:', showScrollToBottom)
-  }, [showScrollToBottom])
-
   // 格式化消息时间
   const formatMessageTime = (timestamp: number) => {
-    const date = new Date(timestamp * 1000) // 转换为毫秒
+    // timestamp 可能是秒或毫秒，需要判断
+    const date = timestamp > 10000000000 
+      ? new Date(timestamp)  // 毫秒级时间戳
+      : new Date(timestamp * 1000)  // 秒级时间戳
+    
     return date.toLocaleString('zh-CN', {
       year: 'numeric',
       month: '2-digit',
@@ -277,29 +276,22 @@ export default function ChatPage() {
     // 延迟查找 DOM 元素，确保已经渲染
     const timer = setTimeout(() => {
       const messagesContainer = document.querySelector('.chat-messages')
-      if (!messagesContainer) {
-        console.log('❌ 未找到 .chat-messages 容器')
-        return
-      }
+      if (!messagesContainer) return
       
-      console.log('✅ 找到聊天容器，开始监听滚动事件')
       messagesContainerRef.current = messagesContainer
 
       // 监听鼠标滚轮事件 - 立即禁用自动滚动
       const handleWheel = (e: Event) => {
-        console.log('🖱️ 检测到鼠标滚轮滚动')
         // 只要用户滚动，立即完全禁用自动滚动
         isUserScrollingRef.current = true
         shouldAutoScrollRef.current = false
         
         // 无条件显示按钮
         setShowScrollToBottom(true)
-        console.log('✅ 已禁用自动滚动，显示回到底部按钮', { showScrollToBottom: true })
       }
 
       // 监听触摸事件（移动端）
       const handleTouchStart = (e: Event) => {
-        console.log('👆 检测到触摸')
         isUserScrollingRef.current = true
         shouldAutoScrollRef.current = false
         setShowScrollToBottom(true)
@@ -308,11 +300,9 @@ export default function ChatPage() {
       // 添加事件监听
       messagesContainer.addEventListener('wheel', handleWheel, { passive: true })
       messagesContainer.addEventListener('touchstart', handleTouchStart, { passive: true })
-      console.log('✅ 事件监听器已添加')
       
       // 清理函数
       return () => {
-        console.log('🧹 清理事件监听器')
         messagesContainer.removeEventListener('wheel', handleWheel)
         messagesContainer.removeEventListener('touchstart', handleTouchStart)
       }
