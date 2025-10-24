@@ -1025,6 +1025,27 @@ body {
   transform: translateY(0);
 }
 
+/* 消息时间戳 */
+.message-timestamp {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+
+.message.assistant .message-timestamp {
+  left: auto;
+  right: 70px; /* 留出复制按钮的空间 */
+}
+
+.message-text:hover .message-timestamp {
+  opacity: 1;
+}
+
 /* Markdown 样式 */
 .message-text h1,
 .message-text h2,

@@ -67,6 +67,19 @@ export default function ChatPage() {
   useEffect(() => {
     console.log('🔍 showScrollToBottom 状态:', showScrollToBottom)
   }, [showScrollToBottom])
+
+  // 格式化消息时间
+  const formatMessageTime = (timestamp: number) => {
+    const date = new Date(timestamp * 1000) // 转换为毫秒
+    return date.toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    })
+  }
   
   // 文件类型检测和分类
   const getFileType = (fileName: string): 'image' | 'audio' | 'document' | null => {
@@ -261,46 +274,54 @@ export default function ChatPage() {
 
   // 监听用户滚动行为
   useEffect(() => {
-    const messagesContainer = document.querySelector('.chat-messages')
-    if (!messagesContainer) {
-      console.log('❌ 未找到 .chat-messages 容器')
-      return
-    }
-    
-    console.log('✅ 找到聊天容器，开始监听滚动事件')
-    messagesContainerRef.current = messagesContainer
-
-    // 监听鼠标滚轮事件 - 立即禁用自动滚动
-    const handleWheel = (e: Event) => {
-      console.log('🖱️ 检测到鼠标滚轮滚动')
-      // 只要用户滚动，立即完全禁用自动滚动
-      isUserScrollingRef.current = true
-      shouldAutoScrollRef.current = false
+    // 延迟查找 DOM 元素，确保已经渲染
+    const timer = setTimeout(() => {
+      const messagesContainer = document.querySelector('.chat-messages')
+      if (!messagesContainer) {
+        console.log('❌ 未找到 .chat-messages 容器')
+        return
+      }
       
-      // 无条件显示按钮
-      setShowScrollToBottom(true)
-      console.log('✅ 已禁用自动滚动，显示回到底部按钮', { showScrollToBottom: true })
-    }
+      console.log('✅ 找到聊天容器，开始监听滚动事件')
+      messagesContainerRef.current = messagesContainer
 
-    // 监听触摸事件（移动端）
-    const handleTouchStart = (e: Event) => {
-      console.log('👆 检测到触摸')
-      isUserScrollingRef.current = true
-      shouldAutoScrollRef.current = false
-      setShowScrollToBottom(true)
-    }
+      // 监听鼠标滚轮事件 - 立即禁用自动滚动
+      const handleWheel = (e: Event) => {
+        console.log('🖱️ 检测到鼠标滚轮滚动')
+        // 只要用户滚动，立即完全禁用自动滚动
+        isUserScrollingRef.current = true
+        shouldAutoScrollRef.current = false
+        
+        // 无条件显示按钮
+        setShowScrollToBottom(true)
+        console.log('✅ 已禁用自动滚动，显示回到底部按钮', { showScrollToBottom: true })
+      }
 
-    // 添加事件监听
-    messagesContainer.addEventListener('wheel', handleWheel, { passive: true })
-    messagesContainer.addEventListener('touchstart', handleTouchStart, { passive: true })
-    console.log('✅ 事件监听器已添加')
+      // 监听触摸事件（移动端）
+      const handleTouchStart = (e: Event) => {
+        console.log('👆 检测到触摸')
+        isUserScrollingRef.current = true
+        shouldAutoScrollRef.current = false
+        setShowScrollToBottom(true)
+      }
+
+      // 添加事件监听
+      messagesContainer.addEventListener('wheel', handleWheel, { passive: true })
+      messagesContainer.addEventListener('touchstart', handleTouchStart, { passive: true })
+      console.log('✅ 事件监听器已添加')
+      
+      // 清理函数
+      return () => {
+        console.log('🧹 清理事件监听器')
+        messagesContainer.removeEventListener('wheel', handleWheel)
+        messagesContainer.removeEventListener('touchstart', handleTouchStart)
+      }
+    }, 500) // 延迟 500ms
     
     return () => {
-      console.log('🧹 清理事件监听器')
-      messagesContainer.removeEventListener('wheel', handleWheel)
-      messagesContainer.removeEventListener('touchstart', handleTouchStart)
+      clearTimeout(timer)
     }
-  }, [])
+  }, [loading])
 
   // 加载用户信息并创建对话
   useEffect(() => {
@@ -452,6 +473,9 @@ export default function ChatPage() {
             }
           }
         })
+        
+        // 按时间戳正序排序（第一条在前，最新的在后）
+        historyMessages.sort((a, b) => a.timestamp - b.timestamp)
         
         setMessages(historyMessages)
         setConversationId(convId)
@@ -784,9 +808,19 @@ export default function ChatPage() {
                         >
                           📋 复制
                         </button>
+                        {/* AI 消息时间 */}
+                        <div className="message-timestamp">
+                          {formatMessageTime(msg.timestamp)}
+                        </div>
                       </>
                     ) : (
-                      msg.content
+                      <>
+                        {msg.content}
+                        {/* 用户消息时间 */}
+                        <div className="message-timestamp">
+                          {formatMessageTime(msg.timestamp)}
+                        </div>
+                      </>
                     )}
                   </div>
                 )}
