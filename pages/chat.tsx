@@ -62,6 +62,11 @@ export default function ChatPage() {
   const shouldAutoScrollRef = useRef(true)
   const messagesContainerRef = useRef<Element | null>(null)
   const [showScrollToBottom, setShowScrollToBottom] = useState(false)
+
+  // 调试：监控 showScrollToBottom 状态变化
+  useEffect(() => {
+    console.log('🔍 showScrollToBottom 状态:', showScrollToBottom)
+  }, [showScrollToBottom])
   
   // 文件类型检测和分类
   const getFileType = (fileName: string): 'image' | 'audio' | 'document' | null => {
@@ -257,37 +262,41 @@ export default function ChatPage() {
   // 监听用户滚动行为
   useEffect(() => {
     const messagesContainer = document.querySelector('.chat-messages')
-    if (!messagesContainer) return
+    if (!messagesContainer) {
+      console.log('❌ 未找到 .chat-messages 容器')
+      return
+    }
     
+    console.log('✅ 找到聊天容器，开始监听滚动事件')
     messagesContainerRef.current = messagesContainer
 
     // 监听鼠标滚轮事件 - 立即禁用自动滚动
     const handleWheel = (e: Event) => {
+      console.log('🖱️ 检测到鼠标滚轮滚动')
       // 只要用户滚动，立即完全禁用自动滚动
       isUserScrollingRef.current = true
       shouldAutoScrollRef.current = false
       
-      // 立即显示按钮
-      if (!checkIfAtBottom()) {
-        setShowScrollToBottom(true)
-      }
+      // 无条件显示按钮
+      setShowScrollToBottom(true)
+      console.log('✅ 已禁用自动滚动，显示回到底部按钮', { showScrollToBottom: true })
     }
 
     // 监听触摸事件（移动端）
     const handleTouchStart = (e: Event) => {
+      console.log('👆 检测到触摸')
       isUserScrollingRef.current = true
       shouldAutoScrollRef.current = false
-      
-      if (!checkIfAtBottom()) {
-        setShowScrollToBottom(true)
-      }
+      setShowScrollToBottom(true)
     }
 
     // 添加事件监听
     messagesContainer.addEventListener('wheel', handleWheel, { passive: true })
     messagesContainer.addEventListener('touchstart', handleTouchStart, { passive: true })
+    console.log('✅ 事件监听器已添加')
     
     return () => {
+      console.log('🧹 清理事件监听器')
       messagesContainer.removeEventListener('wheel', handleWheel)
       messagesContainer.removeEventListener('touchstart', handleTouchStart)
     }
