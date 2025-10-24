@@ -60,6 +60,7 @@ export default function ChatPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const isUserScrollingRef = useRef(false)
   const shouldAutoScrollRef = useRef(true)
+  const messagesContainerRef = useRef<Element | null>(null)
   const [showScrollToBottom, setShowScrollToBottom] = useState(false)
   
   // 文件类型检测和分类
@@ -239,7 +240,7 @@ export default function ChatPage() {
 
   // 检查是否在底部
   const checkIfAtBottom = () => {
-    const messagesContainer = document.querySelector('.chat-messages')
+    const messagesContainer = messagesContainerRef.current
     if (!messagesContainer) return true
     
     const { scrollTop, scrollHeight, clientHeight } = messagesContainer
@@ -253,78 +254,42 @@ export default function ChatPage() {
     }
   }, [messages])
 
-  // 监听用户滚动行为（鼠标滚轮、触摸和鼠标移动）
+  // 监听用户滚动行为
   useEffect(() => {
     const messagesContainer = document.querySelector('.chat-messages')
     if (!messagesContainer) return
-
-    let scrollTimeout: NodeJS.Timeout
-
-    // 检查滚动位置并更新按钮显示
-    const checkScrollPosition = () => {
-      const isAtBottom = checkIfAtBottom()
-      
-      if (!isAtBottom) {
-        setShowScrollToBottom(true)
-        isUserScrollingRef.current = true
-        shouldAutoScrollRef.current = false
-      } else {
-        setShowScrollToBottom(false)
-        isUserScrollingRef.current = false
-        shouldAutoScrollRef.current = true
-      }
-    }
+    
+    messagesContainerRef.current = messagesContainer
 
     // 监听鼠标滚轮事件 - 立即禁用自动滚动
-    const handleWheel = () => {
-      // 立即禁用自动滚动，不等待任何延迟
+    const handleWheel = (e: Event) => {
+      // 只要用户滚动，立即完全禁用自动滚动
       isUserScrollingRef.current = true
       shouldAutoScrollRef.current = false
-      setShowScrollToBottom(true)
       
-      // 延迟检查是否回到底部
-      clearTimeout(scrollTimeout)
-      scrollTimeout = setTimeout(checkScrollPosition, 100)
+      // 立即显示按钮
+      if (!checkIfAtBottom()) {
+        setShowScrollToBottom(true)
+      }
     }
 
     // 监听触摸事件（移动端）
-    const handleTouchStart = () => {
+    const handleTouchStart = (e: Event) => {
       isUserScrollingRef.current = true
       shouldAutoScrollRef.current = false
-      setShowScrollToBottom(true)
       
-      clearTimeout(scrollTimeout)
-      scrollTimeout = setTimeout(checkScrollPosition, 100)
-    }
-
-    // 监听滚动事件 - 立即响应
-    const handleScroll = () => {
-      // 立即检查位置
-      const isAtBottom = checkIfAtBottom()
-      
-      if (!isAtBottom) {
-        // 不在底部，立即禁用自动滚动
-        isUserScrollingRef.current = true
-        shouldAutoScrollRef.current = false
+      if (!checkIfAtBottom()) {
         setShowScrollToBottom(true)
-      } else {
-        // 在底部，恢复自动滚动
-        isUserScrollingRef.current = false
-        shouldAutoScrollRef.current = true
-        setShowScrollToBottom(false)
       }
     }
 
-    // 使用捕获阶段监听，确保最先响应
-    messagesContainer.addEventListener('wheel', handleWheel, { passive: true, capture: true })
-    messagesContainer.addEventListener('touchstart', handleTouchStart, { passive: true, capture: true })
-    messagesContainer.addEventListener('scroll', handleScroll, { passive: true })
+    // 添加事件监听
+    messagesContainer.addEventListener('wheel', handleWheel, { passive: true })
+    messagesContainer.addEventListener('touchstart', handleTouchStart, { passive: true })
     
     return () => {
-      messagesContainer.removeEventListener('wheel', handleWheel, { capture: true } as any)
-      messagesContainer.removeEventListener('touchstart', handleTouchStart, { capture: true } as any)
-      messagesContainer.removeEventListener('scroll', handleScroll)
-      clearTimeout(scrollTimeout)
+      messagesContainer.removeEventListener('wheel', handleWheel)
+      messagesContainer.removeEventListener('touchstart', handleTouchStart)
     }
   }, [])
 
