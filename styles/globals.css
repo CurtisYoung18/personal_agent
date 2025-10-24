@@ -1025,7 +1025,87 @@ body {
   transform: translateY(0);
 }
 
-/* 消息时间戳 */
+/* 消息操作栏（玻璃框） */
+.message-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  opacity: 0;
+  transform: translateY(-5px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+
+.message:hover .message-actions {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: all;
+}
+
+/* 用户消息的操作栏（紫色调） */
+.message.user .message-actions {
+  background: rgba(102, 126, 234, 0.15);
+  border-color: rgba(102, 126, 234, 0.3);
+}
+
+/* AI 消息的操作栏（白色调） */
+.message.assistant .message-actions {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+/* 复制按钮 */
+.message-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: rgba(102, 126, 234, 0.1);
+  border: 1px solid rgba(102, 126, 234, 0.3);
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #667eea;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.message-action-btn:hover {
+  background: rgba(102, 126, 234, 0.2);
+  border-color: rgba(102, 126, 234, 0.5);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.message-action-btn:active {
+  transform: translateY(0);
+}
+
+/* 时间戳文字 */
+.message-action-time {
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* 用户消息的时间戳 */
+.message.user .message-action-time {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* AI 消息的时间戳 */
+.message.assistant .message-action-time {
+  color: rgba(0, 0, 0, 0.5);
+}
+
+/* 消息时间戳（旧样式，保留以防兼容） */
 .message-timestamp {
   position: absolute;
   bottom: 8px;

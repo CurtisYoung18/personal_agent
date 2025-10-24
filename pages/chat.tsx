@@ -785,34 +785,30 @@ export default function ChatPage() {
               </div>
               <div className="message-content">
                 {msg.content !== '' && (
-                  <div className="message-text">
-                    {msg.role === 'assistant' ? (
-                      <>
+                  <>
+                    <div className="message-text">
+                      {msg.role === 'assistant' ? (
                         <ReactMarkdown remarkPlugins={[remarkGfm]}>
                           {msg.content}
                         </ReactMarkdown>
-                        <button 
-                          className="copy-markdown-btn"
-                          onClick={() => copyToMarkdown(msg.content)}
-                          title="复制为 Markdown"
-                        >
-                          📋 复制
-                        </button>
-                        {/* AI 消息时间 */}
-                        <div className="message-timestamp">
-                          {formatMessageTime(msg.timestamp)}
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        {msg.content}
-                        {/* 用户消息时间 */}
-                        <div className="message-timestamp">
-                          {formatMessageTime(msg.timestamp)}
-                        </div>
-                      </>
-                    )}
-                  </div>
+                      ) : (
+                        msg.content
+                      )}
+                    </div>
+                    {/* 消息操作栏（复制 + 时间戳） */}
+                    <div className="message-actions">
+                      <button 
+                        className="message-action-btn"
+                        onClick={() => copyToMarkdown(msg.content)}
+                        title="复制消息"
+                      >
+                        📋 复制
+                      </button>
+                      <span className="message-action-time">
+                        {formatMessageTime(msg.timestamp)}
+                      </span>
+                    </div>
+                  </>
                 )}
                 {/* 用户消息的文件预览 */}
                 {msg.role === 'user' && msg.files && msg.files.length > 0 && (
